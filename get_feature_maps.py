@@ -30,12 +30,13 @@ def get_layer_model(model,layer_name):
 
 if __name__ == '__main__' :
     parser = argparse.ArgumentParser()
-    parser.add_argument('-coco_images', help='image directory in coco format', type=str, default = '/home/jeancherubini/Documents/data/coco_flickrlogos_47/images/train')
-    parser.add_argument('-annotation_json', help='image directory in coco format', type=str, default = '/home/jeancherubini/Documents/data/coco_flickrlogos_47/annotations/instances_train.json')
+    parser.add_argument('-dataset_name', help='dataset name', type=str, choices=['DocExplore', 'flickrlogos_47'], default='flickrlogos_47')
+    parser.add_argument('-coco_images', help='image directory in coco format', type=str, default = '/mnt/BE6CA2E26CA294A5/Datasets/flickrlogos_47_COCO/images/train')
+    parser.add_argument('-annotation_json', help='image directory in coco format', type=str, default = '/mnt/BE6CA2E26CA294A5/Datasets/flickrlogos_47_COCO/annotations/instances_train.json')
     parser.add_argument('-feat_savedir', help='feature save directory', type=str, default='/home/jeancherubini/Documents/feature_maps')
     parser.add_argument('-principal_components', help='amount of components kept (depth of feature vectors)', type=int, default=64)   
     parser.add_argument('-model', help='model used for the convolutional features', type=str, choices=['resnet', 'VGG16'], default='VGG16') 
-    parser.add_argument('-layer', help='resnet layer used for extraction', type=str, choices=['conv1_relu', 'conv2_block3_out', 'conv3_block4_out', 'conv4_block6_out', 'conv5_block3_out', 'block3_conv3', 'block4_conv3', 'block5_conv3'], default='conv2_block3_out') 
+    parser.add_argument('-layer', help='resnet layer used for extraction', type=str, choices=['conv1_relu', 'conv2_block3_out', 'conv3_block4_out', 'conv4_block6_out', 'conv5_block3_out', 'block3_conv3', 'block4_conv3', 'block5_conv3'], default='block3_conv3') 
     parser.add_argument('-batch_size', help='size of the batch of features', type=int, default=10)
     parser.add_argument('-batches_pca', help='How many batches to se for PCA training', type=int, default=5)
 
@@ -43,6 +44,11 @@ if __name__ == '__main__' :
 
     if not os.path.isdir(params.feat_savedir):
         os.mkdir(params.feat_savedir)
+
+    if not os.path.isdir(params.feat_savedir+'/'+params.dataset_name):
+        os.mkdir(params.feat_savedir+'/'+params.dataset_name)
+    
+    params.feat_savedir = params.feat_savedir+'/'+params.dataset_name
     
     features_path = params.feat_savedir + '/' + params.model + '_' + params.layer
     if not os.path.isdir(params.feat_savedir + '/'):
@@ -155,36 +161,48 @@ if __name__ == '__main__' :
 
     batches = make_chunks(ids, params.batch_size)
     batch_counter=0
+
+    #Record errors in the batch_processing
+    error_log = open(features_path + '/errors.txt', 'w')
+
+
     for batch in list(batches):
+        try:
+            #original image
+            images = train_images.load_image_batch(batch)['padded_images']/255
+            annotations = train_images.load_annotations_batch(batch)
+            
+            #features extracted
+            features_batch = intermediate_model(images, training=False)
 
-        #original image
-        images = train_images.load_image_batch(batch)['padded_images']/255
-        annotations = train_images.load_annotations_batch(batch)
+            b, width, height, channels = features_batch.shape
+            
+            #features reshaped for PCA transformation
+            features_reshaped_PCA = tf.reshape(features_batch, (b*width*height,channels))
+            
+            #PCA
+            pca_features = pca.transform(features_reshaped_PCA)
+
+            #l2_normalization        
+            pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
+                            epsilon=1e-12, name=None)
+
+            #Go back to original shape
+            features_to_save = tf.reshape(pca_features, (b,width,height,params.principal_components))
+
+
+
+            np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations})
+
         
-        #features extracted
-        features_batch = intermediate_model(images, training=False)
+            
+            print('batch:', batch_counter, features_to_save.shape)
+            batch_counter+=1
+        except:
+            error_log.write('batch {} too big for memory\n'.format(batch_counter))
+            batch_counter+=1
+            continue
+    
+    error_log.close()
 
-        b, width, height, channels = features_batch.shape
-        
-        #features reshaped for PCA transformation
-        features_reshaped_PCA = tf.reshape(features_batch, (b*width*height,channels))
-        
-        #PCA
-        pca_features = pca.transform(features_reshaped_PCA)
-
-        #l2_normalization        
-        pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
-                        epsilon=1e-12, name=None)
-
-        #Go back to original shape
-        features_to_save = tf.reshape(pca_features, (b,width,height,params.principal_components))
-
-
-
-        np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations})
-
-       
-        
-        print('batch:', batch_counter, features_to_save.shape)
-        batch_counter+=1
     

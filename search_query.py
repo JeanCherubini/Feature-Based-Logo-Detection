@@ -17,10 +17,11 @@ from sklearn.decomposition import PCA
 import pickle as pk
 from datetime import datetime
 
-import skimage.io
+from skimage.io import imread
 
 from PIL import Image, ImageDraw 
 
+from time import time
 
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
@@ -37,13 +38,8 @@ def get_layer_model(model,layer_name):
     return tf.keras.Model(model.inputs, model.get_layer(layer_name).output)
 
 def get_query(query_path, query_class, instance):
-    dirs = os.listdir(query_path)
-    for directory in dirs:
-        dir_class = directory.split('_')[0]
-        if(dir_class == str(query_class)):
-            files = os.listdir(query_path + '/' + directory)
-            query = skimage.io.imread(query_path + '/' + directory + '/' + files[instance], )/255
-            query = query[:,:,:3]
+    query = imread(query_path + '/' + query_class + '/' + instance )/255
+    query = query[:,:,:3]
     return query
 
 
@@ -162,17 +158,21 @@ def get_p_maximum_values_optimized(image_ids, heatmaps, query, p):
 
     return np.array(p_points)
     
-def get_top_images(p_points, top_percentage):
+def get_top_images(p_points, global_top_percentage, in_image_top_porcentage):
     #Sort points by value
     sorted_p_points = sorted(p_points, key = lambda i: i['value'], reverse=True)
     print('sorted_p_points', sorted_p_points, '\n')
     
+    #Calculate maximum value obtained
     max_value = sorted_p_points[0]['value']
-    limit_value = max_value-max_value*(top_percentage)/100
+    limit_value = max_value-max_value*(global_top_percentage)/100
     
+    #Get top points keeping the global_top_percentage calculated from the maximum found in all images
     top_points = [p_point for p_point in sorted_p_points if p_point['value']>=limit_value]
+
     print('top_points', top_points, '\n')
 
+    #Group all points by the imaghe they belong to
     grouped_by_image = defaultdict(list)
 
     for item in top_points:
@@ -182,7 +182,19 @@ def get_top_images(p_points, top_percentage):
     print('grouped_by_image', grouped_by_image, '\n' )
     print('keys', grouped_by_image.keys(), '\n')
 
-    return grouped_by_image.keys(), grouped_by_image
+    #Filter the top detections in each image, keeping the in_image_top_porcentage 
+    grouped_by_image_filtered_top = {}
+
+    for key in grouped_by_image.keys():
+        values_this_image_id = [det['value'] for det in grouped_by_image[key]]
+        max_this_image_id = max(values_this_image_id)
+        detections_to_save = [det for det in grouped_by_image[key] if det['value']>=max_this_image_id-max_this_image_id*(in_image_top_porcentage)/100]
+        grouped_by_image_filtered_top[key]=detections_to_save
+
+    print('grouped_by_image_filtered_top', grouped_by_image_filtered_top)
+
+    return grouped_by_image_filtered_top.keys(), grouped_by_image_filtered_top
+
 
 def get_bounding_boxes(top_images_ids, top_images_detections, query):
 
@@ -199,8 +211,6 @@ def get_bounding_boxes(top_images_ids, top_images_detections, query):
             bboxes_this_image.append(bbox)
         bboxes[id_] = np.array(bboxes_this_image)
 
-    print(bboxes)
-
     return bboxes
 
 
@@ -208,30 +218,42 @@ def get_bounding_boxes(top_images_ids, top_images_detections, query):
 
 if __name__ == '__main__' :
     parser = argparse.ArgumentParser()
-    parser.add_argument('-coco_images', help='image directory in coco format', type=str, default = '/home/jeancherubini/Documents/data/coco_flickrlogos_47/images/train')
-    parser.add_argument('-annotation_json', help='image directory in coco format', type=str, default = '/home/jeancherubini/Documents/data/coco_flickrlogos_47/annotations/instances_train.json')
-    parser.add_argument('-query_path', help='query_location', type=str, default = '/home/jeancherubini/Documents/data/coco_flickrlogos_47/images/queries_train')
-    parser.add_argument('-query_class', help='class of the desired query', type=int, default = 7)
-    parser.add_argument('-features_dir', help='directory of features database', type=str, default='/home/jeancherubini/Documents/feature_maps')
+    parser.add_argument('-dataset_name', help='dataset name', type=str, choices=['DocExplore', 'flickrlogos_47'], default='flickrlogos_47')
+    parser.add_argument('-coco_images', help='image directory in coco format', type=str, default = '/mnt/BE6CA2E26CA294A5/Datasets/flickrlogos_47_COCO/images/train')
+    parser.add_argument('-annotation_json', help='image directory in coco format', type=str, default = '/mnt/BE6CA2E26CA294A5/Datasets/flickrlogos_47_COCO/annotations/instances_train.json')
+    parser.add_argument('-query_path', help='path to queries', type=str, default = '/mnt/BE6CA2E26CA294A5/Datasets/flickrlogos_47_COCO/images/queries_train/')
+    parser.add_argument('-query_class', help='class of the query', type=str, default = 'adidas_symbol')
+    parser.add_argument('-query_instance', help = 'filename of the query', type=str, default = 'random')
+    parser.add_argument('-feat_savedir', help='directory of features database', type=str, default='/home/jeancherubini/Documents/feature_maps')
     parser.add_argument('-principal_components', help='amount of components kept (depth of feature vectors)', type=int, default=64)
     parser.add_argument('-model', help='model used for the convolutional features', type=str, choices=['resnet', 'VGG16'], default='VGG16') 
-    parser.add_argument('-layer', help='resnet layer used for extraction', type=str, choices=['conv1_relu', 'conv2_block3_out', 'conv3_block4_out', 'conv4_block6_out', 'conv5_block3_out', 'block3_conv3', 'block4_conv3', 'block5_conv3'], default='conv2_block3_out') 
+    parser.add_argument('-layer', help='resnet layer used for extraction', type=str, choices=['conv1_relu', 'conv2_block3_out', 'conv3_block4_out', 'conv4_block6_out', 'conv5_block3_out', 'block3_conv3', 'block4_conv3', 'block5_conv3'], default='block3_conv3') 
     parser.add_argument('-p', help='max points collected from each heatmap', type=int, default=15) 
 
 
     params = parser.parse_args()    
+
+    #Model correction features map
+    params.feat_savedir = params.feat_savedir+'/'+params.dataset_name
 
     #creation of dataset like coco
     train_images = CocoLikeDataset()
     train_images.load_data(params.annotation_json, params.coco_images)
     train_images.prepare()
 
+    classes_dictionary = train_images.class_info
+    query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==params.query_class][0]
+
 
     #load desired query
-    instance = 5
-    query = get_query(params.query_path, params.query_class, instance)
-    print(query.shape)
-    
+    if params.query_instance=='random':
+        instances = os.listdir(params.query_path+ '/' + params.query_class)
+        num_instances = len(os.listdir(params.query_path+ '/' + params.query_class))
+        instance = instances[np.random.randint(0,num_instances)]
+        query = get_query(params.query_path, params.query_class, instance)
+    else:
+        query = imread(params.query_path + '/' + params.query_class + '/' + params.query_instance)[:,:,:3]/255
+
 
     #Expand dims to batch
     query = tf.expand_dims(query, axis=0)
@@ -260,7 +282,7 @@ if __name__ == '__main__' :
     intermediate_model = get_layer_model(model, params.layer)
 
     #PCA model
-    pca_dir = params.features_dir + '/PCA/' + params.model + '_' + params.layer
+    pca_dir = params.feat_savedir + '/PCA/' + params.model + '_' + params.layer
     pca = pk.load(open(pca_dir + "/pca_{}.pkl".format(params.principal_components),'rb'))
 
     #Queryu procesing
@@ -291,11 +313,11 @@ if __name__ == '__main__' :
 
     
     #image_features directory
-    image_features_dir = params.features_dir + '/' + params.model + '_' + params.layer
-    print(image_features_dir)
+    image_feat_savedir = params.feat_savedir + '/' + params.model + '_' + params.layer
+    print(image_feat_savedir)
 
     #cant of batches on database
-    cant_of_batches = len(os.listdir(image_features_dir))
+    cant_of_batches = len(os.listdir(image_feat_savedir))
 
     #recover shape query
     query = tf.squeeze(query)
@@ -304,134 +326,156 @@ if __name__ == '__main__' :
     #show query
     plt.figure()
     plt.imshow(query)
-    plt.show()
+    plt.pause(3)
+    plt.show(block=False)
+    plt.close()
 
 
-    for batch_counter in range(cant_of_batches):     
-        print('Processing Batch: {}'.format(batch_counter))
+    t_inicio = time()
+    #Search query in batches of images
+    for batch_counter in range(cant_of_batches):
+        try:     
+            print('Processing Batch: {}'.format(batch_counter))
 
 
-        data = np.load(image_features_dir+'/features_{}.npy'.format(batch_counter), allow_pickle=True)
-        image_ids = data.item().get('image_ids')
-        features = data.item().get('features')
-        
-        #original image
-        images = train_images.load_image_batch(image_ids)['padded_images']/255
-        original_image_sizes = train_images.load_image_batch(image_ids)['original_sizes']
-        annotations = train_images.load_annotations_batch(image_ids)
+            data = np.load(image_feat_savedir+'/features_{}.npy'.format(batch_counter), allow_pickle=True)
+            image_ids = data.item().get('image_ids')
+            features = data.item().get('features')
+            
+            #original image
+            images = train_images.load_image_batch(image_ids)['padded_images']/255
+            original_image_sizes = train_images.load_image_batch(image_ids)['original_sizes']
+            annotations = train_images.load_annotations_batch(image_ids)
 
-        #original image size
-        original_batches, original_width, original_height, original_channels = images.shape
-
-
-        #Convolution of features of the batch and the query
-        features = tf.convert_to_tensor(features)
-        heatmaps = tf.nn.convolution(features, final_query_features, padding = 'SAME', strides=[1,1,1,1])
-        heatmaps = heatmaps/(width_feat_query*height_feat_query)
-
-        #interpolation to original image shapes
-        heatmaps = tf.image.resize(heatmaps, (original_width, original_height), method=tf.image.ResizeMethod.BICUBIC)
-
-        #Deletion of heatmap borders
-        heatmaps = delete_border_values(heatmaps, original_image_sizes, query)
+            #original image size
+            original_batches, original_width, original_height, original_channels = images.shape
 
 
-        if(batch_counter == 0):
-            p_points = get_p_maximum_values_optimized(image_ids, heatmaps, query, params.p)
-        else:
-            p_points = np.concatenate( (p_points, get_p_maximum_values_optimized(image_ids, heatmaps, query, params.p)) )
-        
+            #Convolution of features of the batch and the query
+            features = tf.convert_to_tensor(features)
+            heatmaps = tf.nn.convolution(features, final_query_features, padding = 'SAME', strides=[1,1,1,1])
+            heatmaps = heatmaps/(width_feat_query*height_feat_query)
 
-        print('Batch {} processed'.format(batch_counter))
+            #interpolation to original image shapes
+            heatmaps = tf.image.resize(heatmaps, (original_width, original_height), method=tf.image.ResizeMethod.BICUBIC)
 
+            #Deletion of heatmap borders
+            heatmaps = delete_border_values(heatmaps, original_image_sizes, query)
+
+
+            if(batch_counter == 0):
+                p_points = get_p_maximum_values_optimized(image_ids, heatmaps, query, params.p)
+            else:
+                p_points = np.concatenate( (p_points, get_p_maximum_values_optimized(image_ids, heatmaps, query, params.p)) )
+            
+
+            print('Batch {} processed'.format(batch_counter))
+        except:
+            print('Batch {} missing'.format(batch_counter))
+            continue
  
-        if batch_counter==5:
-            break
+        
+        #if batch_counter==3:
+        #    break
+
+    t_procesamiento = time()-t_inicio
+    print('t_procesamiento', t_procesamiento)
+
 
     #Get top porcentaje of sorted id images and their detections         
-    top_images_ids, top_images_detections = get_top_images(p_points,10)
+    top_images_ids, top_images_detections = get_top_images(p_points,65,50)
 
     #Get the detections in bounding box format for each image
     bounding_boxes = get_bounding_boxes(top_images_ids, top_images_detections, query)
+    
+    #Annotate results in coco format
 
-    #Load the top images
-    #top_images = train_images.load_image_batch(top_images_ids)['padded_images']/255
-    #top_images_annotations = train_images.load_annotations_batch(top_images_ids)
+    #create folder for results
+    if not os.path.isdir(params.feat_savedir + '/results'):
+        os.mkdir(params.feat_savedir + '/results')
+    if not os.path.isdir(params.feat_savedir + '/results/'+params.query_class):
+        os.mkdir(params.feat_savedir + '/results/'+params.query_class)
 
-    display = 1
-    if display:
-        for id_ in top_images_ids:
-            #create figure to 
-            f, (ax0, ax1) = plt.subplots(1, 2, sharey=False)
-            ax0.imshow(query)
-            
-            #image load
-            image = train_images.load_image(id_)
-            ax1.imshow(image)
-            
-            #get ground truth for this image
-            annotation = train_images.load_annotations(id_)
-
-            #get detections for this image
-            bounding_box = get_bounding_boxes([id_], top_images_detections, query)
-            print('bounding_box', bounding_box)
+    results = open('{0}/results/{1}/{2}.txt'.format(params.feat_savedir, params.query_class,params.query_instance.replace('.png','')),'w')
+    #create figure to show query
         
-
-            for ann in annotation:
-                x1, y1 ,width ,height, label = ann 
-                if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
-                    if(int(params.query_class)==int(label)):         
-                        rect = Rectangle((x1,y1), width, height, edgecolor='g', facecolor="none")
-                        ax1.add_patch(rect)
-                
-            for bbox in bounding_box[id_]:
-                x1, y1, height, width = bbox
-                if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
-                    rect = Rectangle((x1,y1), width, height, edgecolor='r', facecolor="none")
-                    ax1.add_patch(rect)
+    
+    
+    for i,id_ in enumerate(top_images_ids):    
+        
+        #get detections for this image
+        bounding_box = get_bounding_boxes([id_], top_images_detections, query)
+    
             
-            plt.show()
+        for bbox in bounding_box[id_]:
+            x1, y1, height, width = bbox
+            if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
+                results_text = '{0} {1} {2} {3} {4} {5}\n'.format(id_, x1, y1, width, height, query_class_num)
+                results.write(results_text)
+    results.close()
 
-    top_10 = 1
 
-    if top_10:
-        #create figure to 
-        fig, ([ax0, ax1, ax2, ax3, ax4], [ax5, ax6, ax7, ax8, ax9, ax10]) = plt.subplots(1, 2, sharey=False)
-        axs = ax0, ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8, ax9, ax10 
+    top = 1
+
+    if top:
+        #create figure to show query
+        plt.figure()
         plt.imshow(query)
+        if not os.path.isdir(params.feat_savedir + '/results'):
+            os.mkdir(params.feat_savedir + '/results')
         
-        for i in range(10):
-            id_ = top_images_ids
+        for i,id_ in enumerate(top_images_ids):
+            n=i%10
+            if n==0:
+                if i!=0:
+                    plt.savefig('{0}/results/{1}_{2}_top_{3}'.format(params.feat_savedir, params.query_class, str(i), params.query_instance))
+                    plt.show(block=False)
+                    plt.pause(3)
+                    plt.close()
+                fig, ([ax0, ax1, ax2, ax3, ax4], [ax5, ax6, ax7, ax8, ax9]) = plt.subplots(2, 5, sharey=False, figsize=(25,15))
+                axs = ax0, ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8, ax9 
 
             
             
+
             #image load
             image = train_images.load_image(id_)
-            ax1.imshow(image)
+            axs[n].imshow(image)
             
             #get ground truth for this image
             annotation = train_images.load_annotations(id_)
 
             #get detections for this image
             bounding_box = get_bounding_boxes([id_], top_images_detections, query)
-            print('bounding_box', bounding_box)
         
+            #Get max value in the image
+            max_value = top_images_detections[id_][0]['value']
+            axs[n].set_xlabel('max value: '+ str(max_value))
+
 
             for ann in annotation:
                 x1, y1 ,width ,height, label = ann 
                 if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
-                    if(int(params.query_class)==int(label)):         
+                    if(int(query_class_num)==int(label)):         
                         rect = Rectangle((x1,y1), width, height, edgecolor='g', facecolor="none")
-                        ax1.add_patch(rect)
+                        axs[n].add_patch(rect)
                 
             for bbox in bounding_box[id_]:
-                print(bbox)
                 x1, y1, height, width = bbox
                 if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
                     rect = Rectangle((x1,y1), width, height, edgecolor='r', facecolor="none")
-                    ax1.add_patch(rect)
+                    axs[n].add_patch(rect)
+
+        
+        plt.savefig('{0}/results/{1}_{2}_top_{3}'.format(params.feat_savedir, params.query_class, 'last', params.query_instance))
+        plt.show(block=False)
+        plt.pause(3)
+        plt.close()
             
-            plt.show()
+
+        
+
+        
 
 
 
