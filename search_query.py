@@ -57,7 +57,6 @@ def delete_border_values(heatmaps, original_image_sizes, query):
         o_width, o_height, _ = original_image_sizes[hmap_index]
         extracted_image = heatmaps[hmap_index, x_elimination_border_query:o_width - x_elimination_border_query, y_elimination_border_query:o_height-y_elimination_border_query, :]
         
-
         canvas[hmap_index, x_elimination_border_query:o_width - x_elimination_border_query, y_elimination_border_query:o_height-y_elimination_border_query, :] = extracted_image
 
     heatmaps = tf.convert_to_tensor(canvas)
@@ -151,7 +150,7 @@ def get_p_maximum_values_optimized(image_ids, heatmaps, query, p):
                     point = {'image_id':image_ids[dim] ,'x_max':max_locations[dim][1].numpy(), 'y_max':max_locations[dim][2].numpy(), 'bbox':[x_begin, y_begin, width_query, height_query],  'value':max_values[dim].numpy()} 
                     p_points.append(point)    
             except:
-                point = {'image_id':-1 ,'x_max':-1, 'y_max':-1, 'value':0} 
+                point = {'image_id':-1 ,'x_max':-1, 'y_max':-1, 'value':-1} 
                 p_points.append(point)    
                 print('No se encontro punto maximo')
                 continue
@@ -199,19 +198,22 @@ def get_top_images(p_points, global_top_percentage, in_image_top_porcentage):
 def get_bounding_boxes(top_images_ids, top_images_detections, query):
 
     width_query, height_query, _= query.shape
-
-    query_half_width= int(width_query/2)
-    query_half_height = int(height_query/2)
     bboxes = {}
+    values = {}
     
     for id_ in top_images_ids:
         bboxes_this_image = [] 
+        values_this_image = [] 
         for detection in top_images_detections[id_]:
             bbox = detection['bbox']
             bboxes_this_image.append(bbox)
-        bboxes[id_] = np.array(bboxes_this_image)
+            value = detection['value']
+            values_this_image.append(value)
 
-    return bboxes
+        bboxes[id_] = np.array(bboxes_this_image)
+        values[id_] = np.array(values_this_image)
+
+    return bboxes, values
 
 
 
@@ -332,6 +334,8 @@ if __name__ == '__main__' :
 
 
     t_inicio = time()
+    max_possible_value = tf.nn.convolution(tf.expand_dims(tf.squeeze(final_query_features),axis=0), final_query_features, padding = 'VALID', strides=[1,1,1,1])
+    print(max_possible_value)
     #Search query in batches of images
     for batch_counter in range(cant_of_batches):
         try:     
@@ -354,7 +358,7 @@ if __name__ == '__main__' :
             #Convolution of features of the batch and the query
             features = tf.convert_to_tensor(features)
             heatmaps = tf.nn.convolution(features, final_query_features, padding = 'SAME', strides=[1,1,1,1])
-            heatmaps = heatmaps/(width_feat_query*height_feat_query)
+            heatmaps = heatmaps/max_possible_value
 
             #interpolation to original image shapes
             heatmaps = tf.image.resize(heatmaps, (original_width, original_height), method=tf.image.ResizeMethod.BICUBIC)
@@ -383,94 +387,45 @@ if __name__ == '__main__' :
 
 
     #Get top porcentaje of sorted id images and their detections         
-    top_images_ids, top_images_detections = get_top_images(p_points,65,50)
+    top_images_ids, top_images_detections = get_top_images(p_points,100,100)
 
     #Get the detections in bounding box format for each image
     bounding_boxes = get_bounding_boxes(top_images_ids, top_images_detections, query)
     
-    #Annotate results in coco format
+    #Annotate detections in coco format
 
     #create folder for results
-    if not os.path.isdir(params.feat_savedir + '/results'):
-        os.mkdir(params.feat_savedir + '/results')
-    if not os.path.isdir(params.feat_savedir + '/results/'+params.query_class):
-        os.mkdir(params.feat_savedir + '/results/'+params.query_class)
+    if not os.path.isdir(params.feat_savedir + '/detections'):
+        os.mkdir(params.feat_savedir + '/detections')
+    if not os.path.isdir(params.feat_savedir + '/detections/'+params.query_class):
+        os.mkdir(params.feat_savedir + '/detections/'+params.query_class)
 
-    results = open('{0}/results/{1}/{2}.txt'.format(params.feat_savedir, params.query_class,params.query_instance.replace('.png','')),'w')
+    results = open('{0}/detections/{1}/{2}.txt'.format(params.feat_savedir, params.query_class,params.query_instance.replace('.png','')),'w')
     #create figure to show query
         
     
     
-    for i,id_ in enumerate(top_images_ids):    
+    for id_ in top_images_ids:    
         
         #get detections for this image
-        bounding_box = get_bounding_boxes([id_], top_images_detections, query)
+        bounding_box, values = get_bounding_boxes([id_], top_images_detections, query)
     
-            
+        for j in range(len(bounding_box[id_])):
+            x1, y1, height, width = bounding_box[id_][j]
+            value = values[id_][j]
+            if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
+                results_text = '{0} {1} {2} {3} {4} {5} {6}\n'.format(id_, x1, y1, width, height, value,  query_class_num)
+                results.write(results_text)
+        '''    
         for bbox in bounding_box[id_]:
             x1, y1, height, width = bbox
             if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
                 results_text = '{0} {1} {2} {3} {4} {5}\n'.format(id_, x1, y1, width, height, query_class_num)
                 results.write(results_text)
+        '''
     results.close()
 
 
-    top = 1
-
-    if top:
-        #create figure to show query
-        plt.figure()
-        plt.imshow(query)
-        if not os.path.isdir(params.feat_savedir + '/results'):
-            os.mkdir(params.feat_savedir + '/results')
-        
-        for i,id_ in enumerate(top_images_ids):
-            n=i%10
-            if n==0:
-                if i!=0:
-                    plt.savefig('{0}/results/{1}_{2}_top_{3}'.format(params.feat_savedir, params.query_class, str(i), params.query_instance))
-                    plt.show(block=False)
-                    plt.pause(3)
-                    plt.close()
-                fig, ([ax0, ax1, ax2, ax3, ax4], [ax5, ax6, ax7, ax8, ax9]) = plt.subplots(2, 5, sharey=False, figsize=(25,15))
-                axs = ax0, ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8, ax9 
-
-            
-            
-
-            #image load
-            image = train_images.load_image(id_)
-            axs[n].imshow(image)
-            
-            #get ground truth for this image
-            annotation = train_images.load_annotations(id_)
-
-            #get detections for this image
-            bounding_box = get_bounding_boxes([id_], top_images_detections, query)
-        
-            #Get max value in the image
-            max_value = top_images_detections[id_][0]['value']
-            axs[n].set_xlabel('max value: '+ str(max_value))
-
-
-            for ann in annotation:
-                x1, y1 ,width ,height, label = ann 
-                if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
-                    if(int(query_class_num)==int(label)):         
-                        rect = Rectangle((x1,y1), width, height, edgecolor='g', facecolor="none")
-                        axs[n].add_patch(rect)
-                
-            for bbox in bounding_box[id_]:
-                x1, y1, height, width = bbox
-                if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
-                    rect = Rectangle((x1,y1), width, height, edgecolor='r', facecolor="none")
-                    axs[n].add_patch(rect)
-
-        
-        plt.savefig('{0}/results/{1}_{2}_top_{3}'.format(params.feat_savedir, params.query_class, 'last', params.query_instance))
-        plt.show(block=False)
-        plt.pause(3)
-        plt.close()
             
 
         

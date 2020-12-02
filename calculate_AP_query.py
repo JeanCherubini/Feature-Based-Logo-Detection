@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA, IncrementalPCA
 import pickle as pk
 from datetime import datetime
+from matplotlib.patches import Rectangle
+
 
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
@@ -35,6 +37,81 @@ def bb_intersection_over_union(boxA, boxB):
 	# return the intersection over union value
 	return iou
 
+def calculate_precision_recall(detections, all_annotations_this_class, th_IoU):
+    true_positives = 0
+    false_positives = 0
+    false_negatives = 0
+
+    precisions = [1]
+    recalls = [0]
+
+
+    #false negatives start as the amount of instances in the set
+    for img_id in all_annotations_this_class.keys():
+        for annot in all_annotations_this_class[img_id]:
+            false_negatives += 1
+            #print(img_id, annot)
+            #plt.imshow(train_images.load_image(img_id)/255)
+            #plt.show()
+
+    #check if the detections made are true positives or false positives according to the iou threshhold
+    for img_id in detections.keys():
+        #image of the detection exists in the ground truth
+        if(img_id in all_annotations_this_class.keys()):
+            already_found = []
+            #if the detection exists in the image, check IoU over all of the annotations in the image
+            for det in detections[img_id]:
+                for annot in all_annotations_this_class[img_id]:
+                    IoU = bb_intersection_over_union(det, annot)
+                    #If detection is sufficient we add a true detection and discount a false negative detection
+                    if IoU>=th_IoU:
+                        #Check if instance was already found
+                        if (str(annot) not in already_found):
+                            true_positives+=1
+                            false_negatives-=1
+                            #save detection for non repetition
+                            already_found.append(str(annot))
+                        else:
+                            print('repetition')
+                            false_positives+=1
+
+
+                    #If detection is not enough
+                    else:
+                        false_positives+=1
+        #image of the detection is not in the ground truth, thus it does not contain the query at all
+        else:
+            false_positives+=1
+
+        try:
+            precisions.append(true_positives/(true_positives+false_positives))
+            recalls.append(true_positives/(true_positives+false_negatives))
+        except:
+            return
+
+    print('TP:', true_positives)
+    print('FP:', false_positives)
+    print('FN:', false_negatives)
+    
+    #smoothing of precisions
+    precisions_smoothed = precisions
+    for i in range(len(precisions)-2,-1,-1):
+        max_to_right = np.max(precisions[i:])
+        if precisions_smoothed[i]<max_to_right:
+            precisions_smoothed[i]=max_to_right
+        else:
+            precisions_smoothed[i]=precisions[i]
+    #end curve
+    if recalls[-1]<1:
+        precisions.append(0)
+        recalls.append(1)
+
+    plt.plot(recalls, precisions_smoothed, '-g')
+    plt.show()
+    return recalls, precisions_smoothed
+
+
+
 if __name__ == '__main__' :
     parser = argparse.ArgumentParser()
     parser.add_argument('-dataset_name', help='dataset name', type=str, choices=['DocExplore', 'flickrlogos_47'], default='flickrlogos_47')
@@ -44,10 +121,7 @@ if __name__ == '__main__' :
     parser.add_argument('-query_class', help='class of the query', type=str, default = 'adidas_symbol')
     parser.add_argument('-query_instance', help = 'filename of the query', type=str, default = 'random')
     parser.add_argument('-feat_savedir', help='directory of features database', type=str, default='/home/jeancherubini/Documents/feature_maps')
-    parser.add_argument('-principal_components', help='amount of components kept (depth of feature vectors)', type=int, default=64)
-    parser.add_argument('-model', help='model used for the convolutional features', type=str, choices=['resnet', 'VGG16'], default='VGG16') 
-    parser.add_argument('-layer', help='resnet layer used for extraction', type=str, choices=['conv1_relu', 'conv2_block3_out', 'conv3_block4_out', 'conv4_block6_out', 'conv5_block3_out', 'block3_conv3', 'block4_conv3', 'block5_conv3'], default='block3_conv3') 
-    parser.add_argument('-p', help='max points collected from each heatmap', type=int, default=15)
+    parser.add_argument('-th_value', help='threshhold value to keep image', type=float, default=0.5)
 
     params = parser.parse_args()    
 
@@ -63,21 +137,27 @@ if __name__ == '__main__' :
     query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==params.query_class][0]
 
     #load desired query results
-    query_results = open('{0}/results/{1}/{2}.txt'.format(params.feat_savedir, params.query_class,params.query_instance.replace('.png','')), 'r')
+    query_results = open('{0}/detections/{1}/{2}.txt'.format(params.feat_savedir, params.query_class,params.query_instance.replace('.png','')), 'r')
 
     #get all detections for each image
     detections = {}
+    detection_values = {}
 
     for row in query_results:
-        id_ = int(row.replace('.png', '').split(' ')[0])
-        bbox = row.replace('.png', '').split(' ')[1:5]
+        id_ = int(row.split(' ')[0])
+        bbox = row.split(' ')[1:5]
         bbox = [int(coord) for coord in bbox]
-        try:
-            detections[id_].append(bbox)
-        except:
-            detections[id_]=[bbox]
-            continue
+        value = float(row.split(' ')[-2])
+        if value>=params.th_value:
+            try:
+                detections[id_].append(bbox)
+                detection_values[id_].append(value)
+            except:
+                detections[id_]=[bbox]
+                detection_values[id_]=[value]
+                continue
     print('detections', detections)
+    print('detection_values', detection_values)
 
     #get all ground truth annotations for the class of the query
     all_annotations_this_class = {}
@@ -100,34 +180,61 @@ if __name__ == '__main__' :
     assert(bb_intersection_over_union([0, 0, 10, 10], [0, 0, 10, 10])==1.0)
     assert(bb_intersection_over_union([0, 0, 10, 10], [10, 10, 10, 10])==0.0)
 
-    
-    true_positives = 0
-    false_positives = 0
-    false_negatives = 0
+    #calculate precision recall
+    precision_recall = calculate_precision_recall(detections, all_annotations_this_class, 0.5)
 
-    #check false negatives, every ground truth that is not in the detections made
-    for img_id in all_annotations_this_class.keys():
-        if(img_id not in detections.keys()):
-            #add one false negative for each wrong detection
-            for annot in all_annotations_this_class[img_id]:
-                false_negatives += 1
-                print(annot)
 
-    #check if the detections made are true positives or false positives according to the iou threshhold
-    for img_id in detections.keys():
-        if(img_id in all_annotations_this_class.keys()):
-            #if the detection exists in the image, check IoU over all of the annotations in the image
-            for det in detections[img_id]:
-                for annot in all_annotations_this_class[img_id]:
-                    IoU = bb_intersection_over_union(det, annot)
-                    if IoU>=0.5:
-                        true_positives+=1
-                    else:
-                        false_positives+=1
-        else:
-            false_positives+=1
+    top = 1
 
-    precision = true_positives/(true_positives+false_positives)
-    recall = true_positives/(true_positives+false_negatives)
-    print(precision, recall)
-    
+    if top:
+        #create figure to show query
+        #plt.figure()
+        #plt.imshow(query)
+        if not os.path.isdir(params.feat_savedir + '/results'):
+            os.mkdir(params.feat_savedir + '/results')
+        
+        for i,id_ in enumerate(detections.keys()):
+            n=i%10
+            if n==0:
+                if i!=0:
+                    plt.savefig('{0}/results/{1}_{2}_top_{3}'.format(params.feat_savedir, params.query_class, str(i), params.query_instance))
+                    plt.show(block=False)
+                    plt.pause(3)
+                    plt.close()
+                fig, ([ax0, ax1, ax2, ax3, ax4], [ax5, ax6, ax7, ax8, ax9]) = plt.subplots(2, 5, sharey=False, figsize=(25,15))
+                axs = ax0, ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8, ax9 
+
+            
+            
+
+            #image load
+            image = train_images.load_image(id_)
+            axs[n].imshow(image)
+            
+
+            #get detections for this image
+            bounding_box = detections[id_]
+
+            for bbox in bounding_box:
+                x1, y1, width, height = bbox
+                if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
+                    rect = Rectangle((x1,y1), width, height, edgecolor='r', facecolor="none")
+                    axs[n].add_patch(rect)
+            try:
+                #get ground truth for this image
+                annotation = train_images.load_annotations(id_)
+                for ann in annotation:
+                    x1, y1 ,width ,height, label = ann 
+                    if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
+                        if(int(query_class_num)==int(label)):         
+                            rect = Rectangle((x1,y1), width, height, edgecolor='g', facecolor="none")
+                            axs[n].add_patch(rect)
+            except:
+                continue
+            
+
+        
+        plt.savefig('{0}/results/{1}_{2}_top_{3}'.format(params.feat_savedir, params.query_class, 'last', params.query_instance))
+        plt.show(block=False)
+        plt.pause(3)
+        plt.close()
