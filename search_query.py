@@ -1,7 +1,6 @@
 
 import sys
 import tensorflow as tf
-from models import resnet#, uv_rois
 import numpy as np
 import argparse
 import os
@@ -44,6 +43,7 @@ def get_query(query_path, query_class, instance):
 
 
 def delete_border_values(heatmaps, original_image_sizes, query):
+    t_deletion = time()
     n, width, height, channels = heatmaps.shape
     width_query, height_query, _= query.shape
 
@@ -60,43 +60,12 @@ def delete_border_values(heatmaps, original_image_sizes, query):
         canvas[hmap_index, x_elimination_border_query:o_width - x_elimination_border_query, y_elimination_border_query:o_height-y_elimination_border_query, :] = extracted_image
 
     heatmaps = tf.convert_to_tensor(canvas)
+    print('Time on deleting borders: {:.3f}'.format(time()-t_deletion))
     return heatmaps
 
-def get_p_maximum_values(image_ids, heatmaps, query, p):
-    n, width, height, channels = heatmaps.shape
-    width_query, height_query, _= query.shape
-
-    x_deletion_query = int(width_query/2)
-    y_deletion_query = int(height_query/2)
-
-    #print(np.unravel_index(np.argmax(heatmaps), heatmaps.shape))
-
-    p_points = []
-
-    for hmap_index in range(n):
-        current_hmap = np.array(heatmaps[hmap_index])    
-        for p_num in range(p):
-            
-            x_max, y_max, _ = np.unravel_index(np.argmax(current_hmap), current_hmap.shape)
-            maximum_value = np.max(current_hmap)
-
-            x_del_begin = x_max - x_deletion_query
-            y_del_begin = y_max - y_deletion_query
-
-            x_del_end = x_max + x_deletion_query
-            y_del_end = y_max + y_deletion_query
-
-
-            current_hmap[x_del_begin:x_del_end, y_del_begin:y_del_end] = 0
-
-            point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'value':maximum_value} 
-            
-            p_points.append(point)
-
-            
-        return np.array(p_points)
 
 def get_p_maximum_values_optimized(image_ids, heatmaps, query, p):
+    t1 = time()
     n, width, height, channels = heatmaps.shape
     width_query, height_query, _= query.shape
 
@@ -154,7 +123,7 @@ def get_p_maximum_values_optimized(image_ids, heatmaps, query, p):
                 p_points.append(point)    
                 print('No se encontro punto maximo')
                 continue
-
+    print('time in finding points: {:.3f}'.format(time()-t1))
     return np.array(p_points)
     
 def get_top_images(p_points, global_top_percentage, in_image_top_porcentage):
@@ -235,8 +204,15 @@ if __name__ == '__main__' :
 
     params = parser.parse_args()    
 
+    
+
     #Model correction features map
     params.feat_savedir = params.feat_savedir+'/'+params.dataset_name
+
+    #check if result already exists
+    if(os.path.isfile('{0}/detections/{1}/{2}.txt'.format(params.feat_savedir, params.query_class,params.query_instance.replace('.png','')))):
+        print('Results for {} already exist!'.format(params.query_instance.replace('.png','')))
+        sys.exit()
 
     #creation of dataset like coco
     train_images = CocoLikeDataset()
@@ -335,12 +311,11 @@ if __name__ == '__main__' :
 
     t_inicio = time()
     max_possible_value = tf.nn.convolution(tf.expand_dims(tf.squeeze(final_query_features),axis=0), final_query_features, padding = 'VALID', strides=[1,1,1,1])
-    print(max_possible_value)
     #Search query in batches of images
     for batch_counter in range(cant_of_batches):
         try:     
-            print('Processing Batch: {}'.format(batch_counter))
-
+            print('Processing Batch: {0} for query {1}'.format(batch_counter, params.query_instance))
+            t_batch = time()
 
             data = np.load(image_feat_savedir+'/features_{}.npy'.format(batch_counter), allow_pickle=True)
             image_ids = data.item().get('image_ids')
@@ -349,16 +324,17 @@ if __name__ == '__main__' :
             #original image
             images = train_images.load_image_batch(image_ids)['padded_images']/255
             original_image_sizes = train_images.load_image_batch(image_ids)['original_sizes']
-            annotations = train_images.load_annotations_batch(image_ids)
 
             #original image size
             original_batches, original_width, original_height, original_channels = images.shape
 
 
+            t_conv = time()
             #Convolution of features of the batch and the query
             features = tf.convert_to_tensor(features)
             heatmaps = tf.nn.convolution(features, final_query_features, padding = 'SAME', strides=[1,1,1,1])
             heatmaps = heatmaps/max_possible_value
+            print('time on convolutions: {:.3f}'.format(time()-t_conv))
 
             #interpolation to original image shapes
             heatmaps = tf.image.resize(heatmaps, (original_width, original_height), method=tf.image.ResizeMethod.BICUBIC)
@@ -373,11 +349,11 @@ if __name__ == '__main__' :
                 p_points = np.concatenate( (p_points, get_p_maximum_values_optimized(image_ids, heatmaps, query, params.p)) )
             
 
-            print('Batch {} processed'.format(batch_counter))
+            print('Batch {0} processed in {:.3f}'.format(batch_counter, time()-t_batch))
         except:
             print('Batch {} missing'.format(batch_counter))
             continue
- 
+        
         
         #if batch_counter==3:
         #    break

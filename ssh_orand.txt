@@ -1,0 +1,7 @@
+working directory: pwd
+
+subir archivo:
+scp "dataset" turing:/users/jcherubini
+
+subir folder:
+scp -r "dataset/folder" turing:/users/jcherubini

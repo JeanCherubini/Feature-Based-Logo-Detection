@@ -1,6 +1,6 @@
 import sys
 import tensorflow as tf
-from models import resnet#, uv_rois
+
 import numpy as np
 import argparse
 import os
@@ -104,13 +104,26 @@ def calculate_precision_recall(detections, all_annotations_this_class, th_IoU):
     #end curve
     if recalls[-1]<1:
         precisions.append(0)
-        recalls.append(1)
+        recalls.append(recalls[-1]+1e-9)
 
-    plt.plot(recalls, precisions_smoothed, '-g')
+    plt.plot(recalls, precisions_smoothed, '-g*')
+    plt.xlim(0,1)
+    plt.ylim(0,1)
     plt.show()
     return recalls, precisions_smoothed
 
+    def calculate_interpolated_AP(recalls, precision):
+        ranges = np.arange(0,1,0.1)
+        maximum_in_range = [1]
 
+        current_range = 1
+        for r in range(len(recalls)):
+            current_max = 0
+            if(recalls[r] <= precision[0]):
+                print()
+
+        print(ranges)
+        
 
 if __name__ == '__main__' :
     parser = argparse.ArgumentParser()
@@ -181,7 +194,8 @@ if __name__ == '__main__' :
     assert(bb_intersection_over_union([0, 0, 10, 10], [10, 10, 10, 10])==0.0)
 
     #calculate precision recall
-    precision_recall = calculate_precision_recall(detections, all_annotations_this_class, 0.5)
+    recalls, precisions = calculate_precision_recall(detections, all_annotations_this_class, 0.5)
+    #calculate_interpolated_AP = calculate_interpolated_AP(recalls, precisions)
 
 
     top = 1
@@ -203,8 +217,6 @@ if __name__ == '__main__' :
                     plt.close()
                 fig, ([ax0, ax1, ax2, ax3, ax4], [ax5, ax6, ax7, ax8, ax9]) = plt.subplots(2, 5, sharey=False, figsize=(25,15))
                 axs = ax0, ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8, ax9 
-
-            
             
 
             #image load

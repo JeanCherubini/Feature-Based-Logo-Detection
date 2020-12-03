@@ -1,7 +1,6 @@
 
 import sys
 import tensorflow as tf
-from models import resnet#, uv_rois
 import numpy as np
 import argparse
 import os
@@ -37,7 +36,7 @@ if __name__ == '__main__' :
     parser.add_argument('-principal_components', help='amount of components kept (depth of feature vectors)', type=int, default=64)   
     parser.add_argument('-model', help='model used for the convolutional features', type=str, choices=['resnet', 'VGG16'], default='VGG16') 
     parser.add_argument('-layer', help='resnet layer used for extraction', type=str, choices=['conv1_relu', 'conv2_block3_out', 'conv3_block4_out', 'conv4_block6_out', 'conv5_block3_out', 'block3_conv3', 'block4_conv3', 'block5_conv3'], default='block3_conv3') 
-    parser.add_argument('-batch_size', help='size of the batch of features', type=int, default=10)
+    parser.add_argument('-batch_size', help='size of the batch of features', type=int, default=3)
     parser.add_argument('-batches_pca', help='How many batches to se for PCA training', type=int, default=5)
 
     params = parser.parse_args()
