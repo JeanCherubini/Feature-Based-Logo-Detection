@@ -72,7 +72,6 @@ def calculate_precision_recall(detections, all_annotations_this_class, th_IoU):
                             #save detection for non repetition
                             already_found.append(str(annot))
                         else:
-                            print('repetition')
                             false_positives+=1
 
 
@@ -89,9 +88,6 @@ def calculate_precision_recall(detections, all_annotations_this_class, th_IoU):
         except:
             return
 
-    print('TP:', true_positives)
-    print('FP:', false_positives)
-    print('FN:', false_negatives)
     
     #smoothing of precisions
     precisions_smoothed = precisions
@@ -103,27 +99,63 @@ def calculate_precision_recall(detections, all_annotations_this_class, th_IoU):
             precisions_smoothed[i]=precisions[i]
     #end curve
     if recalls[-1]<1:
-        precisions.append(0)
-        recalls.append(recalls[-1]+1e-9)
+        precisions.append(1e-15)
+        recalls.append(recalls[-1]+1e-15)
 
-    plt.plot(recalls, precisions_smoothed, '-g*')
+    plt.plot(recalls, precisions_smoothed, '-gp')
     plt.xlim(0,1)
     plt.ylim(0,1)
-    plt.show()
-    return recalls, precisions_smoothed
+    return np.array(recalls), np.array(precisions_smoothed)
 
-    def calculate_interpolated_AP(recalls, precision):
-        ranges = np.arange(0,1,0.1)
-        maximum_in_range = [1]
+def calculate_interpolated_AP(recalls, precision, delta):
 
-        current_range = 1
-        for r in range(len(recalls)):
-            current_max = 0
-            if(recalls[r] <= precision[0]):
-                print()
+    maximums_in_range = []
+    minimums_in_range = []
+    ready = 0
 
-        print(ranges)
+    for r in np.arange(0,1,delta):
+        values_that_exist_this_range = (recalls>=r)&(recalls<r+delta)
+        valid_indexes = np.where(values_that_exist_this_range)[0]
+        values = precision[valid_indexes]
         
+        if(ready==0):
+            if(len(values)!=0):
+                max_in_range = np.max(values)
+                maximums_in_range.append(max_in_range)
+
+                min_in_range = np.min(values)
+                minimums_in_range.append(min_in_range)
+
+                if(1e-15 in precision[valid_indexes]):
+                    ready = 1
+            else:
+                if(maximums_in_range[-1]>minimums_in_range[-1]):
+                    maximums_in_range.append(minimums_in_range[-1])
+                else:
+                    maximums_in_range.append(maximums_in_range[-1])
+
+        else:
+            max_in_range = 0
+            maximums_in_range.append(0)
+
+
+    AP = 100*np.sum(np.array(maximums_in_range))/len(maximums_in_range)
+    plt.plot(np.arange(0,1,delta), maximums_in_range, '*r')
+    plt.plot(np.arange(0,1,delta), np.zeros_like(np.arange(0,1,delta)), 'ob')
+    
+
+    plt.xlim(0,1)
+    plt.ylim(0,1)
+    display=0
+    if display:
+        plt.show(block=False)
+        plt.pause(2)
+        plt.close()
+    return AP
+
+    
+
+    
 
 if __name__ == '__main__' :
     parser = argparse.ArgumentParser()
@@ -169,8 +201,6 @@ if __name__ == '__main__' :
                 detections[id_]=[bbox]
                 detection_values[id_]=[value]
                 continue
-    print('detections', detections)
-    print('detection_values', detection_values)
 
     #get all ground truth annotations for the class of the query
     all_annotations_this_class = {}
@@ -185,7 +215,6 @@ if __name__ == '__main__' :
         if(this_class_annotations):
             all_annotations_this_class[image_id] = this_class_annotations
     
-    print('ground truth', all_annotations_this_class)
 
     #assertions for IoU
     assert(bb_intersection_over_union([0, 0, 5, 5], [0, 0, 10, 10])==0.25)
@@ -193,12 +222,17 @@ if __name__ == '__main__' :
     assert(bb_intersection_over_union([0, 0, 10, 10], [0, 0, 10, 10])==1.0)
     assert(bb_intersection_over_union([0, 0, 10, 10], [10, 10, 10, 10])==0.0)
 
-    #calculate precision recall
-    recalls, precisions = calculate_precision_recall(detections, all_annotations_this_class, 0.5)
-    #calculate_interpolated_AP = calculate_interpolated_AP(recalls, precisions)
+    multiple_ious = [0.05 , 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95]
+    APS = {}
 
+    for iou in multiple_ious:
+        #calculate precision recall
+        recalls, precisions = calculate_precision_recall(detections, all_annotations_this_class, iou)
+        calculated_interpolated_AP = calculate_interpolated_AP(recalls, precisions,0.0001)
+        APS[iou] = calculated_interpolated_AP
+    print(params.query_instance, APS)
 
-    top = 1
+    top = 0
 
     if top:
         #create figure to show query

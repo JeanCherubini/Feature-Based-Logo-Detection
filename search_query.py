@@ -318,6 +318,7 @@ if __name__ == '__main__' :
             t_batch = time()
 
             data = np.load(image_feat_savedir+'/features_{}.npy'.format(batch_counter), allow_pickle=True)
+            print('Time in loading data {}'.format(time()-t_batch))
             image_ids = data.item().get('image_ids')
             features = data.item().get('features')
             
@@ -349,7 +350,7 @@ if __name__ == '__main__' :
                 p_points = np.concatenate( (p_points, get_p_maximum_values_optimized(image_ids, heatmaps, query, params.p)) )
             
 
-            print('Batch {0} processed in {:.3f}'.format(batch_counter, time()-t_batch))
+            print('Batch {0} processed in {1}'.format(batch_counter, time()-t_batch))
         except:
             print('Batch {} missing'.format(batch_counter))
             continue
