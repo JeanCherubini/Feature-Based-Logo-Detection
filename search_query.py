@@ -152,7 +152,6 @@ def get_top_images(p_points, global_top_percentage, in_image_top_porcentage):
         detections_to_save = [det for det in grouped_by_image[key] if det['value']>=max_this_image_id-max_this_image_id*(in_image_top_porcentage)/100]
         grouped_by_image_filtered_top[key]=detections_to_save
 
-    print('grouped_by_image_filtered_top', grouped_by_image_filtered_top)
 
     return grouped_by_image_filtered_top.keys(), grouped_by_image_filtered_top
 
@@ -351,7 +350,7 @@ if __name__ == '__main__' :
     t_procesamiento = time()-t_inicio
     print('t_procesamiento', t_procesamiento)
 
-    
+
     #Get top porcentaje of sorted id images and their detections         
     top_images_ids, top_images_detections = get_top_images(p_points,100,100)
 
