@@ -258,17 +258,14 @@ if __name__ == '__main__' :
 
     #Queryu procesing
     features_query = intermediate_model(query, training=False)
-    print('features_query', features_query.shape)
 
     b, width, height, channels = features_query.shape
     
     #features reshaped for PCA transformation
     features_reshaped_PCA = tf.reshape(features_query, (b*width*height,channels))
-    print('features reshaped for pca', features_reshaped_PCA.shape)
     
     #PCA
     pca_features = pca.transform(features_reshaped_PCA)
-    print('pca features', pca_features.shape)
 
     #l2_normalization        
     pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
@@ -280,7 +277,6 @@ if __name__ == '__main__' :
     final_query_features = tf.expand_dims(final_query_features, axis=3)
     width_feat_query, height_feat_query, channels_feat_query, channels_feat_output_query = query.shape
 
-    print('final_query_features', final_query_features.shape)
 
     
     #image_features directory
