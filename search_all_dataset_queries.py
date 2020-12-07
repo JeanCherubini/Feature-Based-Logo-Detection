@@ -16,9 +16,9 @@ if __name__ == '__main__' :
     params = parser.parse_args()    
 
         
-    query_classes = os.listdir(query_path)
+    query_classes = os.listdir(params.query_path)
     for query_class in query_classes:
-        instances = os.listdir('{0}/{1}'.format(query_path, query_class))
+        instances = os.listdir('{0}/{1}'.format(params.query_path, query_class))
         for query_instance in instances:
             command_queries = 'python search_query.py -dataset_name {0} -coco_images {1} -annotation_json {2} -query_path {3} -query_class {4} -query_instance {5} -model {6} -layer {7}'.format(params.dataset_name, params.coco_images, params.annotation_json, params.query_path, query_class, query_instance, params.model, params.layer) 
             os.system(command_queries)
