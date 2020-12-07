@@ -12,6 +12,7 @@ import pickle as pk
 from datetime import datetime
 from matplotlib.patches import Rectangle
 
+import collections
 
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
@@ -50,34 +51,33 @@ def calculate_precision_recall(detections, all_annotations_this_class, th_IoU):
     for img_id in all_annotations_this_class.keys():
         for annot in all_annotations_this_class[img_id]:
             false_negatives += 1
-            #print(img_id, annot)
-            #plt.imshow(train_images.load_image(img_id)/255)
-            #plt.show()
 
+
+    already_found = []
     #check if the detections made are true positives or false positives according to the iou threshhold
-    for img_id in detections.keys():
+    for value, img_id in detections.keys():
         #image of the detection exists in the ground truth
         if(img_id in all_annotations_this_class.keys()):
-            already_found = []
             #if the detection exists in the image, check IoU over all of the annotations in the image
-            for det in detections[img_id]:
-                for annot in all_annotations_this_class[img_id]:
-                    IoU = bb_intersection_over_union(det, annot)
-                    #If detection is sufficient we add a true detection and discount a false negative detection
-                    if IoU>=th_IoU:
-                        #Check if instance was already found
-                        if (str(annot) not in already_found):
-                            true_positives+=1
-                            false_negatives-=1
-                            #save detection for non repetition
-                            already_found.append(str(annot))
-                        else:
-                            false_positives+=1
-
-
-                    #If detection is not enough
+            bbox_detection = detections[value, img_id]
+            for annot in all_annotations_this_class[img_id]:
+                IoU = bb_intersection_over_union(bbox_detection, annot)
+                #If detection is sufficient we add a true detection and discount a false negative detection, if this annotations wasnt already found
+                if IoU>=th_IoU:
+                    #Check if instance was already found
+                    if (str(img_id)+':'+str(annot) not in already_found):
+                        true_positives+=1
+                        false_negatives-=1
+                        #save detection for non repetition
+                        already_found.append(str(img_id)+':'+str(annot))
                     else:
                         false_positives+=1
+
+
+
+                #If detection is not enough
+                else:
+                    false_positives+=1
         #image of the detection is not in the ground truth, thus it does not contain the query at all
         else:
             false_positives+=1
@@ -194,13 +194,10 @@ if __name__ == '__main__' :
         bbox = [int(coord) for coord in bbox]
         value = float(row.split(' ')[-2])
         if value>=params.th_value:
-            try:
-                detections[id_].append(bbox)
-                detection_values[id_].append(value)
-            except:
-                detections[id_]=[bbox]
-                detection_values[id_]=[value]
-                continue
+            detections[value, id_]=bbox
+    
+
+    ordered_detections = collections.OrderedDict(sorted(detections.items(), reverse=True))
 
     #get all ground truth annotations for the class of the query
     all_annotations_this_class = {}
@@ -225,12 +222,27 @@ if __name__ == '__main__' :
     multiple_ious = [0.05 , 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95]
     APS = {}
 
+
+    if not os.path.isdir(params.feat_savedir + '/AP'):
+        os.mkdir(params.feat_savedir + '/AP')
+    
+    if not os.path.isdir(params.feat_savedir + '/AP/' + params.query_class):
+        os.mkdir(params.feat_savedir + '/AP/' + params.query_class)
+    
+    file_AP = open('{0}/AP/{1}/{2}.txt'.format(params.feat_savedir, params.query_class, params.query_instance.replace('.png', '')), 'w')
+
+
     for iou in multiple_ious:
         #calculate precision recall
-        recalls, precisions = calculate_precision_recall(detections, all_annotations_this_class, iou)
-        calculated_interpolated_AP = calculate_interpolated_AP(recalls, precisions,0.0001)
+        recalls, precisions = calculate_precision_recall(ordered_detections, all_annotations_this_class, iou)
+        calculated_interpolated_AP = calculate_interpolated_AP(recalls, precisions,0.01)
+        file_AP.write('{0}:{1:2.2f}\t'.format(iou, calculated_interpolated_AP) )
         APS[iou] = calculated_interpolated_AP
     print(params.query_instance, APS)
+
+    
+    file_AP.close()
+
 
     top = 0
 

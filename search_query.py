@@ -129,7 +129,6 @@ def get_p_maximum_values_optimized(image_ids, heatmaps, query, p):
 def get_top_images(p_points, global_top_percentage, in_image_top_porcentage):
     #Sort points by value
     sorted_p_points = sorted(p_points, key = lambda i: i['value'], reverse=True)
-    print('sorted_p_points', sorted_p_points, '\n')
     
     #Calculate maximum value obtained
     max_value = sorted_p_points[0]['value']
@@ -138,17 +137,11 @@ def get_top_images(p_points, global_top_percentage, in_image_top_porcentage):
     #Get top points keeping the global_top_percentage calculated from the maximum found in all images
     top_points = [p_point for p_point in sorted_p_points if p_point['value']>=limit_value]
 
-    print('top_points', top_points, '\n')
-
     #Group all points by the imaghe they belong to
     grouped_by_image = defaultdict(list)
 
     for item in top_points:
         grouped_by_image[item['image_id']].append({'x_max':item['x_max'],'y_max':item['y_max'],'bbox':item['bbox'],'value':item['value']})
-
-
-    print('grouped_by_image', grouped_by_image, '\n' )
-    print('keys', grouped_by_image.keys(), '\n')
 
     #Filter the top detections in each image, keeping the in_image_top_porcentage 
     grouped_by_image_filtered_top = {}
@@ -362,9 +355,12 @@ if __name__ == '__main__' :
     t_procesamiento = time()-t_inicio
     print('t_procesamiento', t_procesamiento)
 
+    print(p_points)
 
     #Get top porcentaje of sorted id images and their detections         
     top_images_ids, top_images_detections = get_top_images(p_points,100,100)
+
+    
 
     #Get the detections in bounding box format for each image
     bounding_boxes = get_bounding_boxes(top_images_ids, top_images_detections, query)

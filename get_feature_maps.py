@@ -198,7 +198,6 @@ if __name__ == '__main__' :
             print('batch:', batch_counter, features_to_save.shape)
             batch_counter+=1
         except:
-            error_log.write('batch {} too big for memory\n'.format(batch_counter))
             batch_counter+=1
             continue
     
