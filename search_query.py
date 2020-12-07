@@ -351,8 +351,7 @@ if __name__ == '__main__' :
     t_procesamiento = time()-t_inicio
     print('t_procesamiento', t_procesamiento)
 
-    print(p_points)
-
+    
     #Get top porcentaje of sorted id images and their detections         
     top_images_ids, top_images_detections = get_top_images(p_points,100,100)
 
