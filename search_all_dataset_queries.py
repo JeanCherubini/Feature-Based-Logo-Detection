@@ -15,22 +15,10 @@ if __name__ == '__main__' :
 
     params = parser.parse_args()    
 
-
-    if(params.dataset_name=='flickrlogos_47'):
-        coco_images = '/mnt/BE6CA2E26CA294A5/Datasets/flickrlogos_47_COCO/images/train'
-        annotation_json = '/mnt/BE6CA2E26CA294A5/Datasets/flickrlogos_47_COCO/annotations/instances_train.json'
-        query_path = '/mnt/BE6CA2E26CA294A5/Datasets/flickrlogos_47_COCO/images/queries_train/'
-
-    
-    if(params.dataset_name=='DocExplore'):
-        coco_images = '/mnt/BE6CA2E26CA294A5/Datasets/DocExplore_COCO/images'
-        annotation_json = '/mnt/BE6CA2E26CA294A5/Datasets/DocExplore_COCO/annotations/instances.json'
-        query_path = '/mnt/BE6CA2E26CA294A5/Datasets/DocExplore_COCO/images/queries'
-
         
     query_classes = os.listdir(query_path)
     for query_class in query_classes:
         instances = os.listdir('{0}/{1}'.format(query_path, query_class))
         for query_instance in instances:
-            command_queries = 'python search_query.py -dataset_name {0} -coco_images {1} -annotation_json {2} -query_path {3} -query_class {4} -query_instance {5} -model {6} -layer {7}'.format(params.dataset_name, coco_images, annotation_json, query_path, query_class, query_instance, params.model, params.layer) 
+            command_queries = 'python search_query.py -dataset_name {0} -coco_images {1} -annotation_json {2} -query_path {3} -query_class {4} -query_instance {5} -model {6} -layer {7}'.format(params.dataset_name, params.coco_images, params.annotation_json, params.query_path, query_class, query_instance, params.model, params.layer) 
             os.system(command_queries)
