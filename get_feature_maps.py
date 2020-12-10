@@ -245,14 +245,13 @@ if __name__ == '__main__' :
                 batch_counter+=1
             elif(failed):
                 failed_batches = np.concatenate((failed_batches,batch))
-                print(failed_batches)
         except:
             failed_batches = batch
             failed=True
             continue
 
 
-    splitter = 2
+    splitter = 1
     while len(failed_batches)>0:
         batches = make_chunks(failed_batches, params.batch_size-splitter)
         failed = False
@@ -288,7 +287,6 @@ if __name__ == '__main__' :
                     batch_counter+=1
                 elif failed:
                     failed_batches = np.concatenate((failed_batches,batch))
-                    print(failed_batches)
                     
             except:
                 failed_batches = batch
