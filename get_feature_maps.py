@@ -254,7 +254,7 @@ if __name__ == '__main__' :
 
     splitter = 2
     while len(failed_batches)>0:
-        batches = make_chunks(failed_batches, int(params.batch_size/splitter))
+        batches = make_chunks(failed_batches, params.batch_size-splitter)
         failed = False
         for batch in list(batches):
             try:
@@ -292,8 +292,8 @@ if __name__ == '__main__' :
                     
             except:
                 failed_batches = batch
-                failed=True
-                splitter = splitter*2
+                failed = True
+                splitter = splitter+1
                 continue
         
     
