@@ -252,6 +252,7 @@ if __name__ == '__main__' :
             failed=True
             continue
 
+    #If fails, try extracting the images that are too big and push them to the end of the cicle.
     big_images = []
 
     while len(failed_batches)>0:
@@ -298,7 +299,42 @@ if __name__ == '__main__' :
                 print(failed_batches)
                 failed = True
                 continue
+        failed_bathces=[]
         
-    
+
+    #Process each big image separately as single images
+    for big_image in big_images:
+        try:
+            print('batch',big_image)
+            #original image
+            images = train_images.load_image_batch(big_image)['padded_images']/255
+            annotations = train_images.load_annotations_batch(big_image)
+                
+            #features extracted
+            features_batch = intermediate_model(images, training=False)
+
+            b, width, height, channels = features_batch.shape
+            
+            #features reshaped for PCA transformation
+            features_reshaped_PCA = tf.reshape(features_batch, (b*width*height,channels))
+            
+            #PCA
+            pca_features = pca.transform(features_reshaped_PCA)
+
+            #l2_normalization        
+            pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
+                            epsilon=1e-12, name=None)
+
+            #Go back to original shape
+            features_to_save = tf.reshape(pca_features, (b,width,height,params.principal_components))
+
+            np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':big_image, 'features':features_to_save, 'annotations':annotations})
+
+            print('batch:', batch_counter, features_to_save.shape)
+            batch_counter+=1
+        except:
+            error_log.write('image with id {} impossible to allocate\n'.format(big_image))
+            continue
+
 
     
