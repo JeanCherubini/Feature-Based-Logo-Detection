@@ -207,6 +207,8 @@ if __name__ == '__main__' :
     #Record errors in the batch_processing
     error_log = open(features_path + '/errors.txt', 'w')
 
+
+    #Try to transform every batch with initial size
     #set condition for failure iun batch processing
     failed_batches=[]
     failed=False
@@ -250,10 +252,10 @@ if __name__ == '__main__' :
             failed=True
             continue
 
+    big_images = []
 
-    splitter = 1
     while len(failed_batches)>0:
-        batches = make_chunks(failed_batches, params.batch_size-splitter)
+        batches = make_chunks(failed_batches, params.batch_size)
         failed = False
         for batch in list(batches):
             try:
@@ -285,13 +287,16 @@ if __name__ == '__main__' :
 
                     print('batch:', batch_counter, features_to_save.shape)
                     batch_counter+=1
-                elif failed:
-                    failed_batches = np.concatenate((failed_batches,batch))
-                    
+                elif failed:                    
+                    failed_batches = np.concatenate((failed_batches,batch))             
             except:
-                failed_batches = batch
+                batch_ids_sorted_height = train_images.sort_ids_by_heigth(batch)
+                print('batch_ids_sorted_height',batch_ids_sorted_height) 
+                big_images.append(batch_ids_sorted_height[-1])
+                print('big_images', big_images)       
+                failed_batches = batch_ids_sorted_height[:-1]
+                print(failed_batches)
                 failed = True
-                splitter = splitter+1
                 continue
         
     

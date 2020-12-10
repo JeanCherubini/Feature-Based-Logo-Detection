@@ -444,6 +444,20 @@ class Dataset(object):
 
         sorted_ids = [x for _,x in sorted(zip(ids,args_sorted_widths))]
         return sorted_ids
+    
+    def sort_ids_by_heigth(self, ids_list):
+        ids = []
+        heights = []
+        for id_ in ids_list:
+            info=self.image_info[id_]
+            ids.append(info['id'])
+            heights.append(info['height']) 
+
+        
+        args_sorted_heights = np.array(np.argsort(heights))
+
+        sorted_ids = [x for x,_ in sorted(zip(ids,args_sorted_heights))]
+        return sorted_ids
 
 
 
