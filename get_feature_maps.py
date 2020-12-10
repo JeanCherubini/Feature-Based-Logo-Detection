@@ -19,6 +19,7 @@ def make_chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
+        
 
 def get_layer_model(model,layer_name):
     #Resnet interesting layers
@@ -29,39 +30,39 @@ def process_batch_splits(batch, train_images, pca, params, batch_counter, splits
 
     splits = make_chunks(batch, int(len(batch)/splits_number))
     aux_batch_counter = batch_counter
-
+    failed_images = []
     try:
         for splited_batch in list(splits):
-                print(splited_batch)
-                #original image
-                images = train_images.load_image_batch(splited_batch)['padded_images']/255
-                annotations = train_images.load_annotations_batch(splited_batch)
-                    
-                #features extracted
-                features_batch = intermediate_model(images, training=False)
-
-                b, width, height, channels = features_batch.shape
+            print(splited_batch)
+            #original image
+            images = train_images.load_image_batch(splited_batch)['padded_images']/255
+            annotations = train_images.load_annotations_batch(splited_batch)
                 
-                #features reshaped for PCA transformation
-                features_reshaped_PCA = tf.reshape(features_batch, (b*width*height,channels))
-                
-                #PCA
-                pca_features = pca.transform(features_reshaped_PCA)
+            #features extracted
+            features_batch = intermediate_model(images, training=False)
 
-                #l2_normalization        
-                pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
-                                epsilon=1e-12, name=None)
+            b, width, height, channels = features_batch.shape
+            
+            #features reshaped for PCA transformation
+            features_reshaped_PCA = tf.reshape(features_batch, (b*width*height,channels))
+            
+            #PCA
+            pca_features = pca.transform(features_reshaped_PCA)
 
-                #Go back to original shape
-                features_to_save = tf.reshape(pca_features, (b,width,height,params.principal_components))
+            #l2_normalization        
+            pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
+                            epsilon=1e-12, name=None)
+
+            #Go back to original shape
+            features_to_save = tf.reshape(pca_features, (b,width,height,params.principal_components))
 
 
 
-                np.save(features_path + '/features_{}'.format(aux_batch_counter), {'image_ids':splited_batch, 'features':features_to_save, 'annotations':annotations})
-                
+            np.save(features_path + '/features_{}'.format(aux_batch_counter), {'image_ids':splited_batch, 'features':features_to_save, 'annotations':annotations})
+            
 
-                print('batch:', aux_batch_counter, features_to_save.shape)
-                aux_batch_counter+=1
+            print('batch:', aux_batch_counter, features_to_save.shape)
+            aux_batch_counter+=1
         return aux_batch_counter
         
     except:
@@ -189,7 +190,7 @@ if __name__ == '__main__' :
             break
 
 
-    print('Got feratures for PCA')
+    print('Got features for PCA')
 
 
     #PCA Training
@@ -206,8 +207,95 @@ if __name__ == '__main__' :
     #Record errors in the batch_processing
     error_log = open(features_path + '/errors.txt', 'w')
 
+    #set condition for failure iun batch processing
+    failed_batches=[]
+    failed=False
     for batch in list(batches):
-        batch_counter = process_batch_splits(batch, train_images, pca, params, batch_counter, 1, error_log)
+        try:
+            if not failed:
+                print('batch', batch)
+                #original image
+                images = train_images.load_image_batch(batch)['padded_images']/255
+                annotations = train_images.load_annotations_batch(batch)
+                    
+                #features extracted
+                features_batch = intermediate_model(images, training=False)
+
+                b, width, height, channels = features_batch.shape
+                
+                #features reshaped for PCA transformation
+                features_reshaped_PCA = tf.reshape(features_batch, (b*width*height,channels))
+                
+                #PCA
+                pca_features = pca.transform(features_reshaped_PCA)
+
+                #l2_normalization        
+                pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
+                                epsilon=1e-12, name=None)
+
+                #Go back to original shape
+                features_to_save = tf.reshape(pca_features, (b,width,height,params.principal_components))
+
+
+
+                np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations})
+                
+
+                print('batch:', batch_counter, features_to_save.shape)
+                batch_counter+=1
+            elif(failed):
+                failed_batches = np.concatenate((failed_batches,batch))
+                print(failed_batches)
+        except:
+            failed_batches = batch
+            failed=True
+            continue
+
+
+    splitter = 2
+    while len(failed_batches)>0:
+        batches = make_chunks(failed_batches, int(params.batch_size/splitter))
+        failed = False
+        for batch in list(batches):
+            try:
+                if not failed:
+                    print('batch',batch)
+                    #original image
+                    images = train_images.load_image_batch(batch)['padded_images']/255
+                    annotations = train_images.load_annotations_batch(batch)
+                        
+                    #features extracted
+                    features_batch = intermediate_model(images, training=False)
+
+                    b, width, height, channels = features_batch.shape
+                    
+                    #features reshaped for PCA transformation
+                    features_reshaped_PCA = tf.reshape(features_batch, (b*width*height,channels))
+                    
+                    #PCA
+                    pca_features = pca.transform(features_reshaped_PCA)
+
+                    #l2_normalization        
+                    pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
+                                    epsilon=1e-12, name=None)
+
+                    #Go back to original shape
+                    features_to_save = tf.reshape(pca_features, (b,width,height,params.principal_components))
+
+                    np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations})
+
+                    print('batch:', batch_counter, features_to_save.shape)
+                    batch_counter+=1
+                elif failed:
+                    failed_batches = np.concatenate((failed_batches,batch))
+                    print(failed_batches)
+                    
+            except:
+                failed_batches = batch
+                failed=True
+                splitter = splitter*2
+                continue
+        
     
 
     
