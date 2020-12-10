@@ -433,6 +433,18 @@ class Dataset(object):
     def load_all_annotations(self):
         return self.load_annotations_batch(self._image_ids)
 
+    def sort_all_ids_by_width(self):
+        ids = []
+        widths = []
+        for info in self.image_info:
+            ids.append(info['id'])
+            widths.append(info['width'])
+        
+        args_sorted_widths = np.array(np.argsort(widths))
+
+        sorted_ids = [x for _,x in sorted(zip(ids,args_sorted_widths))]
+        return sorted_ids
+
 
 
 
