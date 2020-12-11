@@ -332,7 +332,7 @@ if __name__ == '__main__' :
             #Go back to original shape
             features_to_save = tf.reshape(pca_features, (b,width,height,params.principal_components))
 
-            np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':big_image, 'features':features_to_save, 'annotations':annotations})
+            np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':[big_image], 'features':features_to_save, 'annotations':annotations})
 
             print('batch:', batch_counter, features_to_save.shape)
             batch_counter+=1
