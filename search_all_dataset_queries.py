@@ -31,4 +31,5 @@ if __name__ == '__main__' :
             result_query = open('{0}/{1}/detections/{2}/{3}.txt'.format(params.feat_savedir, params.dataset_name,  query_class, query_instance.replace('.png','').replace('.jpg','')),'r')
             for row in result_query:
                 all_results.write(row)
+            result_query.close()
     all_results.close()

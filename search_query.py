@@ -196,13 +196,10 @@ if __name__ == '__main__' :
 
     params = parser.parse_args()    
 
-    
 
-    #Model correction features map
-    params.feat_savedir = params.feat_savedir+'/'+params.dataset_name
 
     #check if result already exists
-    if(os.path.isfile('{0}/detections/{1}/{2}.txt'.format(params.feat_savedir, params.query_class,params.query_instance.replace('.png','')))):
+    if(os.path.isfile('{0}/{1}/{2}/detections/{2}/{3}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class, params.query_instance.replace('.png','')))):
         print('Results for {} already exist!'.format(params.query_instance.replace('.png','')))
         sys.exit()
 
@@ -252,7 +249,7 @@ if __name__ == '__main__' :
     intermediate_model = get_layer_model(model, params.layer)
 
     #PCA model
-    pca_dir = params.feat_savedir + '/PCA/' + params.model + '_' + params.layer
+    pca_dir = params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/PCA/'
     pca = pk.load(open(pca_dir + "/pca_{}.pkl".format(params.principal_components),'rb'))
 
     #Queryu procesing
@@ -279,8 +276,7 @@ if __name__ == '__main__' :
 
     
     #image_features directory
-    image_feat_savedir = params.feat_savedir + '/' + params.model + '_' + params.layer
-    print(image_feat_savedir)
+    image_feat_savedir = params.feat_savedir + '/'+ params.dataset_name + '/' + params.model + '_' + params.layer
 
     #cant of batches on database
     cant_of_batches = len(os.listdir(image_feat_savedir))
@@ -305,7 +301,7 @@ if __name__ == '__main__' :
             print('Processing Batch: {0} for query {1}'.format(batch_counter, params.query_instance))
             t_batch = time()
 
-            data = np.load(image_feat_savedir+'/features_{}.npy'.format(batch_counter), allow_pickle=True)
+            data = np.load(image_feat_savedir + '/features_{}.npy'.format(batch_counter), allow_pickle=True)
             print('Time in loading data {}'.format(time()-t_batch))
             image_ids = data.item().get('image_ids')
             features = data.item().get('features')
@@ -362,12 +358,16 @@ if __name__ == '__main__' :
     #Annotate detections in coco format
 
     #create folder for results
-    if not os.path.isdir(params.feat_savedir + '/detections'):
-        os.mkdir(params.feat_savedir + '/detections')
-    if not os.path.isdir(params.feat_savedir + '/detections/'+params.query_class):
-        os.mkdir(params.feat_savedir + '/detections/'+params.query_class)
+    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name):
+        os.mkdir(params.feat_savedir +'/' + params.dataset_name)
 
-    results = open('{0}/detections/{1}/{2}.txt'.format(params.feat_savedir, params.query_class,params.query_instance.replace('.png','')),'w')
+    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/detections'):
+        os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/detections')
+
+    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/detections/'+params.query_class):
+        os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/detections/'+params.query_class)
+
+    results = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer , params.query_class, params.query_instance.replace('.png','').replace('.jpg','')),'w')
     #create figure to show query
         
     

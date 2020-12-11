@@ -95,17 +95,14 @@ if __name__ == '__main__' :
     if not os.path.isdir(params.feat_savedir+'/'+params.dataset_name):
         os.mkdir(params.feat_savedir+'/'+params.dataset_name)
     
-    params.feat_savedir = params.feat_savedir+'/'+params.dataset_name
     
-    features_path = params.feat_savedir + '/' + params.model + '_' + params.layer
-    if not os.path.isdir(params.feat_savedir + '/'):
-        os.mkdir(params.feat_savedir + '/') 
+    features_path = params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer
+    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/'):
+        os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/') 
     if not os.path.isdir(features_path):
         os.mkdir(features_path) 
 
-    pca_path = params.feat_savedir + '/PCA/' + params.model + '_' + params.layer
-    if not os.path.isdir(params.feat_savedir + '/PCA/'):
-        os.mkdir(params.feat_savedir + '/PCA/')
+    pca_path = features_path + '/PCA/' 
     if not os.path.isdir(pca_path):
         os.mkdir(pca_path)
 
@@ -290,7 +287,7 @@ if __name__ == '__main__' :
                     batch_counter+=1
 
                     #condicion de termino                    
-                    if len(failed_batches)<params.batch_size:
+                    if len(failed_batches)<=params.batch_size:
                         failed_batches = []
 
                 elif failed:                    
