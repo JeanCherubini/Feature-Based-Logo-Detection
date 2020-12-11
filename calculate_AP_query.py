@@ -181,7 +181,7 @@ if __name__ == '__main__' :
     query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==params.query_class][0]
 
     #load desired query results
-    query_results = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class,params.query_instance.replace('.png','').replace('.jpg',''), 'r')
+    query_results = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class,params.query_instance.replace('.png','').replace('.jpg','')), 'r')
 
     #get all detections for each image
     detections = {}
