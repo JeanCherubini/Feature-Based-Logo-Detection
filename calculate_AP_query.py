@@ -181,7 +181,7 @@ if __name__ == '__main__' :
     query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==params.query_class][0]
 
     #load desired query results
-    query_results = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class,params.query_instance.replace('.png','')), 'r')
+    query_results = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class,params.query_instance.replace('.png','').replace('.jpg',''), 'r')
 
     #get all detections for each image
     detections = {}
@@ -228,7 +228,7 @@ if __name__ == '__main__' :
     if not os.path.isdir('{0}/{1}/{2}/AP/{3}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class)):
         os.mkdir('{0}/{1}/{2}/AP/{3}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class))
     
-    file_AP = open('{0}/{1}/{2}/AP/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class, params.query_instance.replace('.png', '')), 'w')
+    file_AP = open('{0}/{1}/{2}/AP/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class, params.query_instance.replace('.png', '').replace('.jpg','')), 'w')
 
 
     for iou in multiple_ious:
