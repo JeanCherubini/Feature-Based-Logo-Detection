@@ -299,7 +299,7 @@ if __name__ == '__main__' :
                 print(failed_batches)
                 failed = True
                 continue
-        failed_bathces=[]
+        failed_batches=[]
         
 
     #Process each big image separately as single images
