@@ -27,5 +27,5 @@ if __name__ == '__main__' :
             os.system(command_queries)
             result_query = open('{0}/{1}/detections/{2}/{3}.txt'.format(params.feat_savedir, params.dataset_name,  query_class, query_instance.replace('.png','')),'r')
             for row in result_query:
-                all_results.write(row+'\n')
+                all_results.write(row)
     all_results.close()
