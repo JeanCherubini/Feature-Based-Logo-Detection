@@ -381,7 +381,7 @@ if __name__ == '__main__' :
             x1, y1, height, width = bounding_box[id_][j]
             value = values[id_][j]
             if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
-                results_text = '{0} {1} {2} {3} {4} {5:.2f} {6}\n'.format(id_, x1, y1, width, height, value,  query_class_num)
+                results_text = '{0} {1} {2} {3} {4} {5:.3f} {6}\n'.format(id_, x1, y1, width, height, value,  query_class_num)
                 results.write(results_text)
         '''    
         for bbox in bounding_box[id_]:

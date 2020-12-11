@@ -32,4 +32,5 @@ if __name__ == '__main__' :
             for row in result_query:
                 all_detections.write(query_instance.replace('.png','').replace('.jpg','') + ' ' + row)
             result_query.close()
+
     all_detections.close()
