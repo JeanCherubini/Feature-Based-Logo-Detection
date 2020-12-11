@@ -15,10 +15,16 @@ if __name__ == '__main__' :
 
     params = parser.parse_args()    
 
-        
+    
+    all_results = open('{0}/detections/{1}/all_detections.txt'.format(params.feat_savedir, params.query_class),'w')
+
+
     query_classes = os.listdir(params.query_path)
     for query_class in query_classes:
         instances = os.listdir('{0}/{1}'.format(params.query_path, query_class))
         for query_instance in instances:
             command_queries = 'python search_query.py -dataset_name {0} -coco_images {1} -annotation_json {2} -query_path {3} -query_class {4} -query_instance {5} -model {6} -layer {7}'.format(params.dataset_name, params.coco_images, params.annotation_json, params.query_path, query_class, query_instance, params.model, params.layer) 
             os.system(command_queries)
+            result_query = open('{0}/detections/{1}/{2}.txt'.format(params.feat_savedir, params.query_class,params.query_instance.replace('.png','')),'r')
+            for row in result_query:
+                all_results.write(row+'\n')

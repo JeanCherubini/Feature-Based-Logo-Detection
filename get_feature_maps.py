@@ -288,8 +288,16 @@ if __name__ == '__main__' :
 
                     print('batch:', batch_counter, features_to_save.shape)
                     batch_counter+=1
+
+                    if len(failed_batches)<params.batch_size:
+                        [big_images.append(i) for i in failed_batches]
+                        failed_batches = []
+                
                 elif failed:                    
-                    failed_batches = np.concatenate((failed_batches,batch))             
+                    failed_batches = np.concatenate((failed_batches,batch))
+                
+
+
             except:
                 batch_ids_sorted_height = train_images.sort_ids_by_heigth(batch)
                 print('batch_ids_sorted_height',batch_ids_sorted_height) 
@@ -299,7 +307,6 @@ if __name__ == '__main__' :
                 print(failed_batches)
                 failed = True
                 continue
-        failed_batches=[]
         
 
     #Process each big image separately as single images
@@ -307,8 +314,8 @@ if __name__ == '__main__' :
         try:
             print('batch',big_image)
             #original image
-            images = train_images.load_image_batch(big_image)['padded_images']/255
-            annotations = train_images.load_annotations_batch(big_image)
+            images = train_images.load_image_batch([big_image])['padded_images']/255
+            annotations = train_images.load_annotations_batch([big_image])
                 
             #features extracted
             features_batch = intermediate_model(images, training=False)
