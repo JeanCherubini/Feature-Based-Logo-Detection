@@ -15,6 +15,9 @@ if __name__ == '__main__' :
 
     params = parser.parse_args()    
 
+    if not os.path.isdir('{0}/{1}/detections'.format(params.feat_savedir, params.dataset_name)):
+        os.mkdir('{0}/{1}/detections'.format(params.feat_savedir, params.dataset_name))
+
     
     all_results = open('{0}/{1}/detections/all_detections.txt'.format(params.feat_savedir, params.dataset_name),'w')
 
