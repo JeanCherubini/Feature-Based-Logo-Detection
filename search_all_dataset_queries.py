@@ -28,7 +28,7 @@ if __name__ == '__main__' :
         for query_instance in instances:
             command_queries = 'python search_query.py -dataset_name {0} -coco_images {1} -annotation_json {2} -query_path {3} -query_class {4} -query_instance {5} -model {6} -layer {7}'.format(params.dataset_name, params.coco_images, params.annotation_json, params.query_path, query_class, query_instance, params.model, params.layer) 
             os.system(command_queries)
-            result_query = open('{0}/{1}/detections/{2}/{3}.txt'.format(params.feat_savedir, params.dataset_name,  query_class, query_instance.replace('.png','')),'r')
+            result_query = open('{0}/{1}/detections/{2}/{3}.txt'.format(params.feat_savedir, params.dataset_name,  query_class, query_instance.replace('.png','').replace('.jpg','')),'r')
             for row in result_query:
                 all_results.write(row)
     all_results.close()
