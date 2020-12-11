@@ -43,7 +43,7 @@ def yield_batch_for_PCA(batches):
             print('features reshaped for PCA', features_reshaped_PCA.shape)
 
             batch_counter+=1
-            if batch_counter==params.batches_pca:
+            if batch_counter>params.batches_pca:
                 break
                 
             yield features_reshaped_PCA
