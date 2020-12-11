@@ -289,10 +289,10 @@ if __name__ == '__main__' :
                     print('batch:', batch_counter, features_to_save.shape)
                     batch_counter+=1
 
+                    #condicion de termino                    
                     if len(failed_batches)<params.batch_size:
-                        [big_images.append(i) for i in failed_batches]
                         failed_batches = []
-                
+
                 elif failed:                    
                     failed_batches = np.concatenate((failed_batches,batch))
                 
