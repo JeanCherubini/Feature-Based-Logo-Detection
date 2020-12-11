@@ -26,7 +26,7 @@ if __name__ == '__main__' :
     for query_class in query_classes:
         instances = os.listdir('{0}/{1}'.format(params.query_path, query_class))
         for query_instance in instances:
-            command_queries = 'python search_query.py -dataset_name {0} -coco_images {1} -annotation_json {2} -query_path {3} -query_class {4} -query_instance {5} -model {6} -layer {7}'.format(params.dataset_name, params.coco_images, params.annotation_json, params.query_path, query_class, query_instance, params.model, params.layer) 
+            command_queries = 'python search_query.py -dataset_name {0} -coco_images {1} -annotation_json {2} -feat_saavedir {3} -query_path {4} -query_class {5} -query_instance {6} -model {7} -layer {8}'.format(params.dataset_name, params.coco_images, params.annotation_json, params.feat_savedir, params.query_path, query_class, query_instance, params.model, params.layer) 
             os.system(command_queries)
             result_query = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class, query_instance.replace('.png','').replace('.jpg','')),'r')
             for row in result_query:
