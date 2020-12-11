@@ -26,18 +26,13 @@ def get_layer_model(model,layer_name):
     #conv1_relu, conv2_block3_out, conv3_block4_out, conv4_block6_out, conv5_block3_out
     return tf.keras.Model(model.inputs, model.get_layer(layer_name).output)
 
-def process_batch_splits(batch, train_images, pca, params, batch_counter, splits_number, error_log):
+def yield_batch_for_PCA(batches):
+        batch_counter=0
+        for batch in list(batches):
+            #original images for training
+            images = train_images.load_image_batch(batch)['padded_images']/255
+            print('batch shape', images.shape)
 
-    splits = make_chunks(batch, int(len(batch)/splits_number))
-    aux_batch_counter = batch_counter
-    failed_images = []
-    try:
-        for splited_batch in list(splits):
-            print(splited_batch)
-            #original image
-            images = train_images.load_image_batch(splited_batch)['padded_images']/255
-            annotations = train_images.load_annotations_batch(splited_batch)
-                
             #features extracted
             features_batch = intermediate_model(images, training=False)
 
@@ -45,34 +40,14 @@ def process_batch_splits(batch, train_images, pca, params, batch_counter, splits
             
             #features reshaped for PCA transformation
             features_reshaped_PCA = tf.reshape(features_batch, (b*width*height,channels))
-            
-            #PCA
-            pca_features = pca.transform(features_reshaped_PCA)
+            print('features reshaped for PCA', features_reshaped_PCA.shape)
 
-            #l2_normalization        
-            pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
-                            epsilon=1e-12, name=None)
+            batch_counter+=1
+            if batch_counter==params.batches_pca:
+                break
+                
+            yield features_reshaped_PCA
 
-            #Go back to original shape
-            features_to_save = tf.reshape(pca_features, (b,width,height,params.principal_components))
-
-
-
-            np.save(features_path + '/features_{}'.format(aux_batch_counter), {'image_ids':splited_batch, 'features':features_to_save, 'annotations':annotations})
-            
-
-            print('batch:', aux_batch_counter, features_to_save.shape)
-            aux_batch_counter+=1
-        return aux_batch_counter
-        
-    except:
-        images=[]
-        if(len(splited_batch)!=1):
-            print('Spliting batch')
-            batch_counter = process_batch_splits(batch, train_images, pca, params, batch_counter, splits_number*2, error_log)
-        else:
-            error_log.write('image with id {} impossible to allocate\n'.format(batch))
-            return batch_counter+1
         
 
 if __name__ == '__main__' :
@@ -154,45 +129,18 @@ if __name__ == '__main__' :
     batches = make_chunks(ids, params.batch_size)
 
     #creacion de PCA
+    pca = IncrementalPCA(n_components=params.principal_components)
 
-    pca = PCA(n_components=params.principal_components)
     
-    #PCA data for training
-    batch_counter=0
-    for batch in list(batches):
+    features_for_pca_training_generator = yield_batch_for_PCA(batches)
 
-        #original images for training
-        images = train_images.load_image_batch(batch)['padded_images']/255
-        print('batch shape', images.shape)
-
-        #features extracted
-        features_batch = intermediate_model(images, training=False)
-
-        b, width, height, channels = features_batch.shape
-        
-        #features reshaped for PCA transformation
-        features_reshaped_PCA = tf.reshape(features_batch, (b*width*height,channels))
-        print('features reshaped for PCA', features_reshaped_PCA.shape)
-        
-        if(batch_counter==0):
-            features_for_pca_training = features_reshaped_PCA
-        else:
-            features_for_pca_training = np.concatenate((features_for_pca_training,features_reshaped_PCA))
-        
-        print(batch_counter, features_for_pca_training.shape)
-
-        batch_counter+=1
-
-        if(batch_counter>=params.batches_pca):
-            break
+    for features_for_pca_training in list(features_for_pca_training_generator):
+        print('training PCA model with {} features'.format(features_for_pca_training.shape))
+        pca.partial_fit(features_for_pca_training)
 
 
-    print('Got features for PCA')
 
-
-    #PCA Training
-    print('training PCA model with {} features'.format(features_for_pca_training.shape))
-    pca.fit(features_for_pca_training)
+    
     print('variance:', pca.explained_variance_)
     pk.dump(pca, open(pca_path + "/pca_{}.pkl".format(params.principal_components),"wb"))
     #Memory free
