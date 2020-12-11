@@ -163,15 +163,14 @@ if __name__ == '__main__' :
     parser.add_argument('-coco_images', help='image directory in coco format', type=str, default = '/mnt/BE6CA2E26CA294A5/Datasets/flickrlogos_47_COCO/images/train')
     parser.add_argument('-annotation_json', help='image directory in coco format', type=str, default = '/mnt/BE6CA2E26CA294A5/Datasets/flickrlogos_47_COCO/annotations/instances_train.json')
     parser.add_argument('-query_path', help='path to queries', type=str, default = '/mnt/BE6CA2E26CA294A5/Datasets/flickrlogos_47_COCO/images/queries_train/')
+    parser.add_argument('-model', help='model used for the convolutional features', type=str, choices=['resnet', 'VGG16'], default='VGG16') 
+    parser.add_argument('-layer', help='resnet layer used for extraction', type=str, choices=['conv1_relu', 'conv2_block3_out', 'conv3_block4_out', 'conv4_block6_out', 'conv5_block3_out', 'block3_conv3', 'block4_conv3', 'block5_conv3'], default='block3_conv3') 
     parser.add_argument('-query_class', help='class of the query', type=str, default = 'adidas_symbol')
     parser.add_argument('-query_instance', help = 'filename of the query', type=str, default = 'random')
     parser.add_argument('-feat_savedir', help='directory of features database', type=str, default='/home/jeancherubini/Documents/feature_maps')
     parser.add_argument('-th_value', help='threshhold value to keep image', type=float, default=0.5)
 
     params = parser.parse_args()    
-
-    #Model correction features map
-    params.feat_savedir = params.feat_savedir+'/'+params.dataset_name
 
     #creation of dataset like coco
     train_images = CocoLikeDataset()
@@ -182,7 +181,7 @@ if __name__ == '__main__' :
     query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==params.query_class][0]
 
     #load desired query results
-    query_results = open('{0}/detections/{1}/{2}.txt'.format(params.feat_savedir, params.query_class,params.query_instance.replace('.png','')), 'r')
+    query_results = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class,params.query_instance.replace('.png','')), 'r')
 
     #get all detections for each image
     detections = {}
@@ -223,20 +222,20 @@ if __name__ == '__main__' :
     APS = {}
 
 
-    if not os.path.isdir(params.feat_savedir + '/AP'):
-        os.mkdir(params.feat_savedir + '/AP')
+    if not os.path.isdir('{0}/{1}/{2}/AP'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer)):
+        os.mkdir('{0}/{1}/{2}/AP'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer))
     
-    if not os.path.isdir(params.feat_savedir + '/AP/' + params.query_class):
-        os.mkdir(params.feat_savedir + '/AP/' + params.query_class)
+    if not os.path.isdir('{0}/{1}/{2}/AP/{3}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class)):
+        os.mkdir('{0}/{1}/{2}/AP/{3}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class))
     
-    file_AP = open('{0}/AP/{1}/{2}.txt'.format(params.feat_savedir, params.query_class, params.query_instance.replace('.png', '')), 'w')
+    file_AP = open('{0}/{1}/{2}/AP/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class, params.query_instance.replace('.png', '')), 'w')
 
 
     for iou in multiple_ious:
         #calculate precision recall
         recalls, precisions = calculate_precision_recall(ordered_detections, all_annotations_this_class, iou)
         calculated_interpolated_AP = calculate_interpolated_AP(recalls, precisions,0.01)
-        file_AP.write('{0}:{1:2.2f}\t'.format(iou, calculated_interpolated_AP) )
+        file_AP.write('{0}:{1:2.2f} '.format(iou, calculated_interpolated_AP) )
         APS[iou] = calculated_interpolated_AP
     print(params.query_instance, APS)
 
@@ -257,7 +256,7 @@ if __name__ == '__main__' :
             n=i%10
             if n==0:
                 if i!=0:
-                    plt.savefig('{0}/results/{1}_{2}_top_{3}'.format(params.feat_savedir, params.query_class, str(i), params.query_instance))
+                    plt.savefig('{0}/{1}/{2}/results/{3}/{4}_top_{5}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class, params.query_instance, str(i)))
                     plt.show(block=False)
                     plt.pause(3)
                     plt.close()
@@ -292,7 +291,7 @@ if __name__ == '__main__' :
             
 
         
-        plt.savefig('{0}/results/{1}_{2}_top_{3}'.format(params.feat_savedir, params.query_class, 'last', params.query_instance))
+        plt.savefig('{0}/{1}/{2}/results/{3}/{4}_top_{5}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class, params.query_instance, 'last'))
         plt.show(block=False)
         plt.pause(3)
         plt.close()

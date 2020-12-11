@@ -199,8 +199,8 @@ if __name__ == '__main__' :
 
 
     #check if result already exists
-    if(os.path.isfile('{0}/{1}/{2}/detections/{2}/{3}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class, params.query_instance.replace('.png','')))):
-        print('Results for {} already exist!'.format(params.query_instance.replace('.png','')))
+    if(os.path.isfile('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class, params.query_instance.replace('.png','').replace('.jpg','')))):
+        print('Results for {} already exist!'.format(params.query_instance.replace('.png','').replace('.jpg','')))
         sys.exit()
 
     #creation of dataset like coco

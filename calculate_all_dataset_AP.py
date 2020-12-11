@@ -15,7 +15,7 @@ if __name__ == '__main__' :
 
     params = parser.parse_args()    
 
-    file_all_ap = open('{0}/{1}/AP/all_AP.txt'.format(params.feat_savedir, params.dataset_name), 'w')
+    file_all_ap = open('{0}/{1}/{2}/AP/all_AP.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer), 'w')
 
     query_classes = os.listdir(params.query_path)
     for query_class in query_classes:
@@ -23,9 +23,9 @@ if __name__ == '__main__' :
         for query_instance in instances:
             command_queries = 'python calculate_AP_query.py -dataset_name {0} -coco_images {1} -annotation_json {2} -query_path {3} -query_class {4} -query_instance {5} -th_value {6}'.format(params.dataset_name, params.coco_images, params.annotation_json, params.query_path, query_class, query_instance, params.th_value) 
             os.system(command_queries)
-            file_ap = open('{0}/{1}/AP/{2}/{3}.txt'.format(params.feat_savedir, params.dataset_name, query_class, query_instance.replace('.png', '')), 'r')
+            file_ap = open('{0}/{1}/{2}/AP/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class, query_instance.replace('.png', '').replace('.jpg','')), 'r')    
             AP = file_ap.readline()
             file_ap.close()
-            file_all_ap.write(AP+'\n')
+            file_all_ap.write(query_instance.replace('.png', '').replace('.jpg','') + ' ' + AP + '\n')
     
     file_all_ap.close()

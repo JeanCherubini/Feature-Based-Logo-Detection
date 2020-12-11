@@ -15,11 +15,11 @@ if __name__ == '__main__' :
 
     params = parser.parse_args()    
 
-    if not os.path.isdir('{0}/{1}/detections'.format(params.feat_savedir, params.dataset_name)):
-        os.mkdir('{0}/{1}/detections'.format(params.feat_savedir, params.dataset_name))
+    if not os.path.isdir('{0}/{1}/{2}/detections'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer)):
+        os.mkdir('{0}/{1}/{2}/detections'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer))
 
     
-    all_results = open('{0}/{1}/detections/all_detections.txt'.format(params.feat_savedir, params.dataset_name),'w')
+    all_detections = open('{0}/{1}/{2}/detections/all_detections.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer),'w')
 
 
     query_classes = os.listdir(params.query_path)
@@ -28,8 +28,8 @@ if __name__ == '__main__' :
         for query_instance in instances:
             command_queries = 'python search_query.py -dataset_name {0} -coco_images {1} -annotation_json {2} -query_path {3} -query_class {4} -query_instance {5} -model {6} -layer {7}'.format(params.dataset_name, params.coco_images, params.annotation_json, params.query_path, query_class, query_instance, params.model, params.layer) 
             os.system(command_queries)
-            result_query = open('{0}/{1}/detections/{2}/{3}.txt'.format(params.feat_savedir, params.dataset_name,  query_class, query_instance.replace('.png','').replace('.jpg','')),'r')
+            result_query = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class, query_instance.replace('.png','').replace('.jpg','')),'r')
             for row in result_query:
-                all_results.write(row)
+                all_detections.write(query_instance.replace('.png','').replace('.jpg','') + ' ' + row)
             result_query.close()
-    all_results.close()
+    all_detections.close()
