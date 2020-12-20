@@ -41,6 +41,60 @@ def get_query(query_path, query_class, instance):
     query = query[:,:,:3]
     return query
 
+def stack_batches(features_stacked, image_ids_stacked):
+    max_width = 0
+    max_height = 0
+    #group ids
+    batches_ids = []
+    for array_id in image_ids_stacked:
+        batches_ids += array_id.tolist()
+    print(batches_ids)
+
+    #get 
+    for features in features_stacked:
+        if features.shape[1] > max_width:
+            max_width = features.shape[1]
+        if features.shape[2] > max_height:
+            max_height = features.shape[2]
+        depth = features.shape[3]
+        
+    
+    canvas = np.zeros([len(batches_ids), max_width, max_height, depth])
+    print(canvas.shape)
+
+
+    counter = 0
+    for feature in features_stacked:
+        canvas[counter:feature.shape[0]+counter, :feature.shape[1], :feature.shape[2], :feature.shape[3]] = feature
+        counter += feature.shape[0]
+    
+    return canvas, batches_ids
+
+def yield_stacked_batches(stack_number, cant_of_batches, train_images):
+    for batch_counter in range(cant_of_batches):
+        #reset for new stack
+        if batch_counter%stack_number==0:
+            features_stacked = []
+            image_ids_stacked = []
+        
+        data = np.load(image_feat_savedir + '/features_{}.npy'.format(batch_counter), allow_pickle=True)
+
+        image_ids = data.item().get('image_ids')
+        features = data.item().get('features')
+
+        image_ids_stacked.append(image_ids)
+        features_stacked.append(features)
+        if (len(image_ids_stacked)==stack_number):
+            images_stacked, ids_stacked = stack_batches(features_stacked, image_ids_stacked)
+            yield images_stacked, ids_stacked
+        elif(batch_counter==cant_of_batches-1):
+            images_stacked, ids_stacked = stack_batches(features_stacked, image_ids_stacked)
+            yield images_stacked, ids_stacked
+
+
+
+
+
 def delete_border_values(heatmaps, original_image_sizes, query):
     t_deletion = time()
     n, width, height, channels = heatmaps.shape
@@ -224,7 +278,6 @@ if __name__ == '__main__' :
     #Expand dims to batch
     query = tf.expand_dims(query, axis=0)
 
-    '''
     # GPU OPTIONS
     gpus = tf.config.experimental.list_physical_devices('GPU')
     if gpus:
@@ -233,7 +286,6 @@ if __name__ == '__main__' :
                 tf.config.experimental.set_memory_growth(gpu, True)
         except RuntimeError as e:
             print(e)
-    '''
 
 
     #base model
@@ -286,11 +338,58 @@ if __name__ == '__main__' :
         if('features' in file_):
             cant_of_batches +=1
     #recover shape query
+
+    #recover shape query
     query = tf.squeeze(query)
 
 
     t_inicio = time()
-    max_possible_value = tf.nn.convolution(tf.expand_dims(tf.squeeze(final_query_features),axis=0), final_query_features, padding = 'VALID', strides=[1,1,1,1])
+    max_possible_value = tf.nn.conv2d(tf.expand_dims(tf.squeeze(final_query_features),axis=0), final_query_features, padding = 'VALID', strides=[1,1,1,1])
+
+    stacked_batches = yield_stacked_batches(10, cant_of_batches, train_images)
+
+    stack_counter = 0
+    for stack, stack_ids in stacked_batches:
+        try:
+            #original image
+            original_image_sizes = train_images.load_image_batch(stack_ids)['original_sizes']
+
+            #original image size
+            original_batches, original_width, original_height, original_channels = train_images.load_image_batch(stack_ids)['padded_batch_size']
+
+
+            t_conv = time()
+            features = tf.convert_to_tensor(stack)
+            heatmaps = tf.nn.conv2d(features, final_query_features, padding = 'SAME', strides=[1,1,1,1])
+            heatmaps = heatmaps/max_possible_value
+            print('time on convolutions: {:.3f}'.format(time()-t_conv))
+
+            #interpolation to original image shapes
+            heatmaps = tf.image.resize(heatmaps, (original_width, original_height), method=tf.image.ResizeMethod.BICUBIC)
+
+            #Deletion of heatmap borders
+            heatmaps = delete_border_values(heatmaps, original_image_sizes, query)
+
+
+            if(stack_counter == 0):
+                p_points = get_p_maximum_values_optimized(stack_ids, heatmaps, query, params.p)
+            else:
+                p_points = np.concatenate( (p_points, get_p_maximum_values_optimized(stack_ids, heatmaps, query, params.p)) )
+
+            stack_counter+=1
+            
+
+        except:
+            print('asdf')
+
+
+        print('tiempo total: {}'.format(time()-t_inicio))
+
+
+
+
+    
+    '''
     #Search query in batches of images
     for batch_counter in range(cant_of_batches):
         try:     
@@ -378,14 +477,16 @@ if __name__ == '__main__' :
             if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
                 results_text = '{0} {1} {2} {3} {4} {5:.3f} {6}\n'.format(id_, x1, y1, width, height, value,  query_class_num)
                 results.write(results_text)
-        '''    
+    '''           
+    '''    
         for bbox in bounding_box[id_]:
             x1, y1, height, width = bbox
             if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
                 results_text = '{0} {1} {2} {3} {4} {5}\n'.format(id_, x1, y1, width, height, query_class_num)
                 results.write(results_text)
-        '''
+    
     results.close()
+    '''
 
 
             

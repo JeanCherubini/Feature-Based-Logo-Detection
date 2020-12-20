@@ -403,9 +403,9 @@ class Dataset(object):
         for n in range(len(images_list)):
             img = images_list[n]
             width,height,channels = img.shape
-            canvas[n,:width,:height,:channels] = img 
+            canvas[n,:width,:height,:channels] = img
 
-        return {'padded_images':canvas, 'original_sizes':image_sizes_list}
+        return {'padded_images':canvas, 'original_sizes':image_sizes_list, 'padded_batch_size':canvas.shape}
 
     def load_annotations_batch(self, ids_list):
         max_cant = 0
