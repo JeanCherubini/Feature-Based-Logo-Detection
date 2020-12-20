@@ -81,7 +81,6 @@ if __name__ == '__main__' :
     if not os.path.isdir(pca_path):
         os.mkdir(pca_path)
 
-    '''
     # GPU OPTIONS
     gpus = tf.config.experimental.list_physical_devices('GPU')
     if gpus:
@@ -91,7 +90,6 @@ if __name__ == '__main__' :
         except RuntimeError as e:
             print(e)
 
-    '''
 
     #base model
     if(params.model == 'resnet'):

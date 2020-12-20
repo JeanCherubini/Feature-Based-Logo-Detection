@@ -224,7 +224,6 @@ if __name__ == '__main__' :
     #Expand dims to batch
     query = tf.expand_dims(query, axis=0)
 
-    '''
     # GPU OPTIONS
     gpus = tf.config.experimental.list_physical_devices('GPU')
     if gpus:
@@ -233,7 +232,6 @@ if __name__ == '__main__' :
                 tf.config.experimental.set_memory_growth(gpu, True)
         except RuntimeError as e:
             print(e)
-    '''
 
 
     #base model
