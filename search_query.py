@@ -175,10 +175,8 @@ def get_bounding_boxes(top_images_ids, top_images_detections, query):
 
     return bboxes, values
 
+def main():
 
-
-
-if __name__ == '__main__' :
     parser = argparse.ArgumentParser()
     parser.add_argument('-dataset_name', help='dataset name', type=str, choices=['DocExplore', 'flickrlogos_47'], default='flickrlogos_47')
     parser.add_argument('-coco_images', help='image directory in coco format', type=str, default = '/mnt/BE6CA2E26CA294A5/Datasets/flickrlogos_47_COCO/images/train')
@@ -191,16 +189,22 @@ if __name__ == '__main__' :
     parser.add_argument('-model', help='model used for the convolutional features', type=str, choices=['resnet', 'VGG16'], default='VGG16') 
     parser.add_argument('-layer', help='resnet layer used for extraction', type=str, choices=['conv1_relu', 'conv2_block3_out', 'conv3_block4_out', 'conv4_block6_out', 'conv5_block3_out', 'block3_conv3', 'block4_conv3', 'block5_conv3'], default='block3_conv3') 
     parser.add_argument('-p', help='max points collected from each heatmap', type=int, default=15) 
-
-
+    
     params = parser.parse_args()    
-
-
 
     #check if result already exists
     if(os.path.isfile('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class, params.query_instance.replace('.png','').replace('.jpg','')))):
         print('Results for {} already exist!'.format(params.query_instance.replace('.png','').replace('.jpg','')))
-        sys.exit()
+        return 0
+
+    # GPU OPTIONS
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    if gpus:
+        try:
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+        except RuntimeError as e:
+            print(e)
 
     #creation of dataset like coco
     train_images = CocoLikeDataset()
@@ -224,14 +228,7 @@ if __name__ == '__main__' :
     #Expand dims to batch
     query = tf.expand_dims(query, axis=0)
 
-    # GPU OPTIONS
-    gpus = tf.config.experimental.list_physical_devices('GPU')
-    if gpus:
-        try:
-            for gpu in gpus:
-                tf.config.experimental.set_memory_growth(gpu, True)
-        except RuntimeError as e:
-            print(e)
+    
 
 
     #base model
@@ -268,6 +265,8 @@ if __name__ == '__main__' :
 
     #Go back to original shape
     final_query_features = tf.reshape(pca_features, (width,height,pca_features.shape[-1]))
+    final_query_features = tf.dtypes.cast(final_query_features, tf.float32)
+
 
     final_query_features = tf.expand_dims(final_query_features, axis=3)
     width_feat_query, height_feat_query, channels_feat_query, channels_feat_output_query = query.shape
@@ -287,11 +286,13 @@ if __name__ == '__main__' :
     query = tf.squeeze(query)
 
 
+
+
     t_inicio = time()
     max_possible_value = tf.nn.convolution(tf.expand_dims(tf.squeeze(final_query_features),axis=0), final_query_features, padding = 'VALID', strides=[1,1,1,1])
     #Search query in batches of images
     for batch_counter in range(cant_of_batches):
-        try:     
+        try:
             print('Processing Batch: {0} for query {1}'.format(batch_counter, params.query_instance))
             t_batch = time()
 
@@ -310,6 +311,9 @@ if __name__ == '__main__' :
             t_conv = time()
             #Convolution of features of the batch and the query
             features = tf.convert_to_tensor(features)
+            features = tf.dtypes.cast(features, tf.float32)
+
+            print(features.dtype)
             heatmaps = tf.nn.convolution(features, final_query_features, padding = 'SAME', strides=[1,1,1,1])
             heatmaps = heatmaps/max_possible_value
             print('time on convolutions: {:.3f}'.format(time()-t_conv))
@@ -330,7 +334,6 @@ if __name__ == '__main__' :
             print('Batch {0} processed in {1}'.format(batch_counter, time()-t_batch))
         except:
             print('Batch {} missing'.format(batch_counter))
-            continue
         
         
         #if batch_counter==3:
@@ -384,6 +387,7 @@ if __name__ == '__main__' :
                 results.write(results_text)
         '''
     results.close()
+    return 0
 
 
             
@@ -396,3 +400,9 @@ if __name__ == '__main__' :
 
 
 
+
+
+
+
+if __name__ == '__main__' :
+    exit(main())
