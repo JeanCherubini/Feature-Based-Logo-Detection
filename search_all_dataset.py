@@ -277,7 +277,7 @@ def main():
          
 
             
-                final_query_features = tf.dtypes.cast(final_query_features, tf.float16)
+                #final_query_features = tf.dtypes.cast(final_query_features, tf.float16)
 
                 #Expand dims for convolutions
                 final_query_features = tf.expand_dims(final_query_features, axis=3)
@@ -322,7 +322,7 @@ def main():
                         t_conv = time()
                         #Convolution of features of the batch and the query
                         features = tf.convert_to_tensor(features)
-                        features = tf.dtypes.cast(features, tf.float16)
+                        #features = tf.dtypes.cast(features, tf.float16)
 
                         print('features shape:{0} \n query_shape: {1}'.format(features.shape, final_query_features.shape))
 
