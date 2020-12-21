@@ -20,17 +20,22 @@ if __name__ == '__main__' :
 
     
     all_detections = open('{0}/{1}/{2}/detections/all_detections.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer),'w')
+    errors = open('{0}/{1}/{2}/detections/errors.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer),'w')
 
 
     query_classes = os.listdir(params.query_path)
     for query_class in query_classes:
         instances = os.listdir('{0}/{1}'.format(params.query_path, query_class))
         for query_instance in instances:
-            command_queries = 'python search_query.py -dataset_name {0} -coco_images {1} -annotation_json {2} -feat_savedir {3} -query_path {4} -query_class {5} -query_instance {6} -model {7} -layer {8}'.format(params.dataset_name, params.coco_images, params.annotation_json, params.feat_savedir, params.query_path, query_class, query_instance, params.model, params.layer) 
-            os.system(command_queries)
-            result_query = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class, query_instance.replace('.png','').replace('.jpg','')),'r')
-            for row in result_query:
-                all_detections.write(query_instance.replace('.png','').replace('.jpg','') + ' ' + row)
-            result_query.close()
-
+            try:
+                command_queries = 'python search_query.py -dataset_name {0} -coco_images {1} -annotation_json {2} -feat_savedir {3} -query_path {4} -query_class {5} -query_instance {6} -model {7} -layer {8}'.format(params.dataset_name, params.coco_images, params.annotation_json, params.feat_savedir, params.query_path, query_class, query_instance, params.model, params.layer) 
+                os.system(command_queries)
+                result_query = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class, query_instance.replace('.png','').replace('.jpg','')),'r')
+                for row in result_query:
+                    all_detections.write(query_instance.replace('.png','').replace('.jpg','') + ' ' + row)
+                result_query.close()
+            except:
+                errors.write('Error finding query class {} instance {}\n'.format(query_class, query_instance.replace('.png','').replace('.jpg','')))
+                continue
+    errors.close()
     all_detections.close()
