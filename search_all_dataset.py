@@ -270,7 +270,7 @@ def main():
                 width_feat_query, height_feat_query, channels_feat_query = final_query_features.shape
 
 
-                while width_feat_query>20 or height_feat_query>20:
+                while width_feat_query>150 or height_feat_query>150:
                     final_query_features = tf.image.resize(final_query_features, [int(width_feat_query*0.75), int(height_feat_query*0.75)], preserve_aspect_ratio = True)
                     width_feat_query, height_feat_query, channels_feat_query = final_query_features.shape
                     print('query_shape resized:', width_feat_query, height_feat_query, channels_feat_query)
