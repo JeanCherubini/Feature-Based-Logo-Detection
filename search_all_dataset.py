@@ -268,7 +268,7 @@ def main():
 
 
                 #Resize big queries
-                width_feat_query, height_feat_query, channels_feat_query, channels_feat_output_query = final_query_features.shape
+                width_feat_query, height_feat_query, channels_feat_query = final_query_features.shape
 
                 while width_feat_query>100 or height_feat_query>100:
                     final_query_features = tf.image.resize(final_query_feaures, [int(width_feat_query/2), int(height_feat_query/2)], preserve_aspect_ratio = True,)
