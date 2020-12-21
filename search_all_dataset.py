@@ -265,11 +265,19 @@ def main():
 
                 #Go back to original shape
                 final_query_features = tf.reshape(pca_features, (width,height,pca_features.shape[-1]))
+
+
+                #Resize big queries
+                width_feat_query, height_feat_query, channels_feat_query, channels_feat_output_query = final_query_features.shape
+
+                while width_feat_query>100 or height_feat_query>100:
+                    final_query_features = tf.image.resize(final_query_feaures, [int(width_feat_query/2), int(height_feat_query/2)], preserve_aspect_ratio = True,)
+
+            
                 final_query_features = tf.dtypes.cast(final_query_features, tf.float16)
 
-
+                #Expand dims for convolutions
                 final_query_features = tf.expand_dims(final_query_features, axis=3)
-                width_feat_query, height_feat_query, channels_feat_query, channels_feat_output_query = query.shape
 
 
                 
@@ -312,6 +320,7 @@ def main():
                         #Convolution of features of the batch and the query
                         features = tf.convert_to_tensor(features)
                         features = tf.dtypes.cast(features, tf.float16)
+
                         print('features shape:{0} \n query_shape: {1}'.format(features.shape, final_query_features.shape))
 
                         heatmaps = tf.nn.convolution(features, final_query_features, padding = 'SAME', strides=[1,1,1,1])
