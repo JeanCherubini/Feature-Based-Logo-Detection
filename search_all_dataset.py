@@ -57,7 +57,6 @@ def delete_border_values(heatmaps, original_image_sizes, query):
         extracted_image = heatmaps[hmap_index, x_elimination_border_query:o_width - x_elimination_border_query, y_elimination_border_query:o_height-y_elimination_border_query, :]
         
         canvas[hmap_index, x_elimination_border_query:o_width - x_elimination_border_query, y_elimination_border_query:o_height-y_elimination_border_query, :] = extracted_image
-
     heatmaps = tf.convert_to_tensor(canvas)
     print('Time on deleting borders: {:.3f}'.format(time()-t_deletion))
     return heatmaps
@@ -270,11 +269,12 @@ def main():
                 #Resize big queries
                 width_feat_query, height_feat_query, channels_feat_query = final_query_features.shape
 
-                while width_feat_query>100 or height_feat_query>100:
-                    final_query_features = tf.image.resize(final_query_features, [int(width_feat_query/2), int(height_feat_query/2)], preserve_aspect_ratio = True)
+
+                while width_feat_query>20 or height_feat_query>20:
+                    final_query_features = tf.image.resize(final_query_features, [int(width_feat_query*0.75), int(height_feat_query*0.75)], preserve_aspect_ratio = True)
                     width_feat_query, height_feat_query, channels_feat_query = final_query_features.shape
                     print('query_shape resized:', width_feat_query, height_feat_query, channels_feat_query)
-
+         
 
             
                 final_query_features = tf.dtypes.cast(final_query_features, tf.float16)
@@ -399,7 +399,6 @@ def main():
                             results.write(results_text)
                     '''
                 results.close()
-                return 0
 
 
             
