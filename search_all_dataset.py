@@ -312,6 +312,7 @@ def main():
                         #Convolution of features of the batch and the query
                         features = tf.convert_to_tensor(features)
                         features = tf.dtypes.cast(features, tf.float16)
+                        print('features shape:{0} \n query_shape: {1}'.format(features.shape, final_query_features.shape))
 
                         heatmaps = tf.nn.convolution(features, final_query_features, padding = 'SAME', strides=[1,1,1,1])
                         heatmaps = heatmaps/max_possible_value
