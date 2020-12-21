@@ -243,23 +243,33 @@ if __name__ == '__main__' :
     file_AP.close()
 
 
-    top = 0
+    top = 1
 
     if top:
         #create figure to show query
         #plt.figure()
         #plt.imshow(query)
-        if not os.path.isdir(params.feat_savedir + '/results'):
-            os.mkdir(params.feat_savedir + '/results')
+        if not os.path.isdir('{0}/{1}/{2}/results'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer)):
+            os.mkdir('{0}/{1}/{2}/results'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer))
+
+        if not os.path.isdir('{0}/{1}/{2}/results/{3}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class)):
+            os.mkdir('{0}/{1}/{2}/results/{3}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class))
         
-        for i,id_ in enumerate(detections.keys()):
+        if not os.path.isdir('{0}/{1}/{2}/results/{3}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class)):
+            os.mkdir('{0}/{1}/{2}/results/{3}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class))
+        
+
+        for i,(value,id_) in enumerate(ordered_detections.keys()):
+            print('value,id_', value, id_)
             n=i%10
             if n==0:
                 if i!=0:
                     plt.savefig('{0}/{1}/{2}/results/{3}/{4}_top_{5}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class, params.query_instance, str(i)))
+                    '''
                     plt.show(block=False)
                     plt.pause(3)
                     plt.close()
+                    '''
                 fig, ([ax0, ax1, ax2, ax3, ax4], [ax5, ax6, ax7, ax8, ax9]) = plt.subplots(2, 5, sharey=False, figsize=(25,15))
                 axs = ax0, ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8, ax9 
             
@@ -270,16 +280,16 @@ if __name__ == '__main__' :
             
 
             #get detections for this image
-            bounding_box = detections[id_]
 
-            for bbox in bounding_box:
-                x1, y1, width, height = bbox
-                if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
-                    rect = Rectangle((x1,y1), width, height, edgecolor='r', facecolor="none")
-                    axs[n].add_patch(rect)
+            bbox = ordered_detections[value,id_]
+
+            x1, y1, width, height = bbox
+            if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
+                rect = Rectangle((x1,y1), width, height, edgecolor='r', facecolor="none")
+                axs[n].add_patch(rect)
             try:
                 #get ground truth for this image
-                annotation = train_images.load_annotations(id_)
+                annotation = train_images.load_annotations([id_])
                 for ann in annotation:
                     x1, y1 ,width ,height, label = ann 
                     if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
@@ -292,6 +302,8 @@ if __name__ == '__main__' :
 
         
         plt.savefig('{0}/{1}/{2}/results/{3}/{4}_top_{5}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.query_class, params.query_instance, 'last'))
+        '''
         plt.show(block=False)
         plt.pause(3)
         plt.close()
+        '''

@@ -15,6 +15,9 @@ if __name__ == '__main__' :
 
     params = parser.parse_args()    
 
+    if not os.path.isdir('{0}/{1}/{2}/AP'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer)):
+        os.mkdir('{0}/{1}/{2}/AP'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer))
+
     file_all_ap = open('{0}/{1}/{2}/AP/all_AP.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer), 'w')
 
     query_classes = os.listdir(params.query_path)

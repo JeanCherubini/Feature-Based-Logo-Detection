@@ -265,7 +265,7 @@ def main():
 
     #Go back to original shape
     final_query_features = tf.reshape(pca_features, (width,height,pca_features.shape[-1]))
-    final_query_features = tf.dtypes.cast(final_query_features, tf.float32)
+    final_query_features = tf.dtypes.cast(final_query_features, tf.float16)
 
 
     final_query_features = tf.expand_dims(final_query_features, axis=3)
@@ -311,9 +311,8 @@ def main():
             t_conv = time()
             #Convolution of features of the batch and the query
             features = tf.convert_to_tensor(features)
-            features = tf.dtypes.cast(features, tf.float32)
+            features = tf.dtypes.cast(features, tf.float16)
 
-            print(features.dtype)
             heatmaps = tf.nn.convolution(features, final_query_features, padding = 'SAME', strides=[1,1,1,1])
             heatmaps = heatmaps/max_possible_value
             print('time on convolutions: {:.3f}'.format(time()-t_conv))
