@@ -20,7 +20,7 @@ if __name__ == '__main__' :
 
     for row in all_detections_ordered:
         #image retrieval
-        query_id, image_detected, x1, y1, width, height, value, query_class = row.split(' ')
+        image_detected, query_id, x1, y1, width, height, value, query_class = row.split(' ')
         if query_id not in detections_by_query_id.keys():
             detections_by_query_id[query_id]=[query_id, image_detected, x1, y1, width, height, value, query_class]
 

@@ -226,7 +226,7 @@ class AP_calculator_class():
         file_AP.close()
 
 
-        top = 1
+        top = 0
 
         if top:
             #create figure to show query
