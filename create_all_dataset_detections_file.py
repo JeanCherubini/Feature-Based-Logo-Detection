@@ -14,10 +14,6 @@ if __name__ == '__main__' :
     parser.add_argument('-th_value', help='threshhold value to keep image', type=float, default=0.5)
 
     params = parser.parse_args()    
-
-    if not os.path.isdir('{0}/{1}/{2}/detections'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer)):
-        os.mkdir('{0}/{1}/{2}/detections'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer))
-
     
     all_detections = open('{0}/{1}/{2}/detections/all_detections.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer),'w')
     errors = open('{0}/{1}/{2}/detections/errors.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer),'w')
@@ -28,8 +24,6 @@ if __name__ == '__main__' :
         instances = os.listdir('{0}/{1}'.format(params.query_path, query_class))
         for query_instance in instances:
             try:
-                command_queries = 'python search_query.py -dataset_name {0} -coco_images {1} -annotation_json {2} -feat_savedir {3} -query_path {4} -query_class {5} -query_instance {6} -model {7} -layer {8}'.format(params.dataset_name, params.coco_images, params.annotation_json, params.feat_savedir, params.query_path, query_class, query_instance, params.model, params.layer) 
-                os.system(command_queries)
                 result_query = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class, query_instance.replace('.png','').replace('.jpg','')),'r')
                 for row in result_query:
                     all_detections.write(query_instance.replace('.png','').replace('.jpg','') + ' ' + row)

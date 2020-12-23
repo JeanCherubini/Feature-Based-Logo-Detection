@@ -2,6 +2,8 @@ import os
 
 import argparse
 
+from calculate_AP_class import *
+
 if __name__ == '__main__' :
     parser = argparse.ArgumentParser()
     parser.add_argument('-dataset_name', help='dataset name', type=str, choices=['DocExplore', 'flickrlogos_47'], default='flickrlogos_47')
@@ -21,11 +23,13 @@ if __name__ == '__main__' :
     file_all_ap = open('{0}/{1}/{2}/AP/all_AP.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer), 'w')
 
     query_classes = os.listdir(params.query_path)
+
+    AP_calculator = AP_calculator_class()
+
     for query_class in query_classes:
         instances = os.listdir('{0}/{1}'.format(params.query_path, query_class))
         for query_instance in instances:
-            command_queries = 'python calculate_AP_query.py -dataset_name {0} -coco_images {1} -annotation_json {2} -feat_savedir {3} -query_path {4} -query_class {5} -query_instance {6} -th_value {7}'.format(params.dataset_name, params.coco_images, params.annotation_json, params.feat_savedir, params.query_path, query_class, query_instance, params.th_value) 
-            os.system(command_queries)
+            AP_calculator.calculate_query(params, query_class, query_instance)
             file_ap = open('{0}/{1}/{2}/AP/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class, query_instance.replace('.png', '').replace('.jpg','')), 'r')    
             AP = file_ap.readline()
             file_ap.close()
