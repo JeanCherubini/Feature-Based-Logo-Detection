@@ -68,8 +68,6 @@ def get_p_maximum_values(image_ids, heatmaps, query, p):
     x_deletion_query = int(width_query/2)
     y_deletion_query = int(height_query/2)
 
-
-
     #print(np.unravel_index(np.argmax(heatmaps), heatmaps.shape))
 
     p_points = []
@@ -90,7 +88,7 @@ def get_p_maximum_values(image_ids, heatmaps, query, p):
             x_del_end = x_max + y_deletion_query
 
             y_del_end = y_max + x_deletion_query
-
+            
             '''
             fig, axs = plt.subplots(1, 1, sharey=False, figsize=(25,15))
             axs.imshow(current_hmap)
@@ -112,7 +110,7 @@ def get_p_maximum_values(image_ids, heatmaps, query, p):
             current_hmap[y_del_begin:y_del_end, x_del_begin:x_del_end] = 0
  
             point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin, y_del_begin, x_del_end-x_del_begin, y_del_end-y_del_begin], 'value':maximum_value} 
-            
+            print(point)
             p_points.append(point)
 
             
@@ -128,10 +126,6 @@ def get_p_maximum_values_optimized(image_ids, heatmaps, query, p):
     #Range to delete from the borders, depends on query shape
     x_deletion_query = math.floor(width_query/2)
     y_deletion_query = math.floor(height_query/2)
-
-    plt.imshow(query)
-    plt.figure()
-
 
     #Copy of heatmaps that is actually modifiable
     heatmaps_modifiable = np.array(heatmaps)
@@ -404,8 +398,6 @@ class query_finder():
 
                 t_procesamiento = time()-t_inicio
                 print('t_procesamiento', t_procesamiento)
-
-                print(p_points)
 
                 #Get top porcentaje of sorted id images and their detections         
                 top_images_ids, top_images_detections = get_top_images(p_points,100,100)
