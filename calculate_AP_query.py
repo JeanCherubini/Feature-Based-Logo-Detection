@@ -37,6 +37,6 @@ if __name__ == '__main__' :
 
     AP_calculator = AP_calculator_class()
 
-    AP_calculator.calculate_query(params, params.query_class, params.query_instance)
+    AP_calculator.calculate_query(self, params, query_class, query_instance, ordered_detections, train_images)
 
     

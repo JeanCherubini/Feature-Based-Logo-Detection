@@ -62,6 +62,63 @@ def delete_border_values(heatmaps, original_image_sizes, query):
     print('Time on deleting borders: {:.3f}'.format(time()-t_deletion))
     return heatmaps
 
+def get_p_maximum_values(image_ids, heatmaps, query, p):
+    n, width, height, channels = heatmaps.shape
+    width_query, height_query, _= query.shape
+    x_deletion_query = int(width_query/2)
+    y_deletion_query = int(height_query/2)
+
+
+
+    #print(np.unravel_index(np.argmax(heatmaps), heatmaps.shape))
+
+    p_points = []
+
+    for hmap_index in range(n):
+        current_hmap = np.array(heatmaps[hmap_index])
+
+        for p_num in range(p):
+            
+            y_max,x_max, _ = np.unravel_index(np.argmax(current_hmap), current_hmap.shape)
+
+            maximum_value = np.max(current_hmap)
+
+            x_del_begin = x_max - y_deletion_query
+            
+            y_del_begin = y_max - x_deletion_query
+
+            x_del_end = x_max + y_deletion_query
+
+            y_del_end = y_max + x_deletion_query
+
+            '''
+            fig, axs = plt.subplots(1, 1, sharey=False, figsize=(25,15))
+            axs.imshow(current_hmap)
+            cntr = Rectangle((x_max, y_max), 3, 3, edgecolor='b', facecolor="r")
+            axs.add_patch(cntr)
+            rect = Rectangle((x_del_begin, y_del_begin), x_del_end-x_del_begin, y_del_end-y_del_begin, edgecolor='g', facecolor="none")
+            axs.add_patch(rect)
+
+
+            left_point = Rectangle((x_del_begin, y_del_begin), 2, 2, edgecolor='g', facecolor="r")
+            axs.add_patch(left_point)
+
+            right_point = Rectangle((x_del_end, y_del_end), 2, 2, edgecolor='g', facecolor="r")
+            axs.add_patch(right_point)
+
+            plt.show()
+            '''
+
+            current_hmap[y_del_begin:y_del_end, x_del_begin:x_del_end] = 0
+ 
+            point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin, y_del_begin, x_del_end-x_del_begin, y_del_end-y_del_begin], 'value':maximum_value} 
+            
+            p_points.append(point)
+
+            
+        return np.array(p_points)
+
+
 
 def get_p_maximum_values_optimized(image_ids, heatmaps, query, p):
     t1 = time()
@@ -71,6 +128,9 @@ def get_p_maximum_values_optimized(image_ids, heatmaps, query, p):
     #Range to delete from the borders, depends on query shape
     x_deletion_query = math.floor(width_query/2)
     y_deletion_query = math.floor(height_query/2)
+
+    plt.imshow(query)
+    plt.figure()
 
 
     #Copy of heatmaps that is actually modifiable
@@ -114,9 +174,13 @@ def get_p_maximum_values_optimized(image_ids, heatmaps, query, p):
                         x_end=height
 
                     heatmaps_modifiable[dim, y_begin:y_end, x_begin:x_end, 0] = 0
+                    
+                    if dim ==1:
+                        plt.imshow(heatmaps_modifiable[dim])
+                        plt.show()
 
                     point = {'image_id':image_ids[dim] ,'x_max':max_locations[dim][1].numpy(), 'y_max':max_locations[dim][2].numpy(), 'bbox':[x_begin, y_begin, width_query, height_query],  'value':max_values[dim].numpy()} 
-                    p_points.append(point)    
+                    p_points.append(point)
             except:
                 point = {'image_id':-1 ,'x_max':-1, 'y_max':-1, 'value':-1} 
                 p_points.append(point)    
@@ -134,7 +198,7 @@ def get_top_images(p_points, global_top_percentage, in_image_top_porcentage):
     limit_value = max_value-max_value*(global_top_percentage)/100
     
     #Get top points keeping the global_top_percentage calculated from the maximum found in all images
-    top_points = [p_point for p_point in sorted_p_points if p_point['value']>=limit_value]
+    top_points = [p_point for p_point in sorted_p_points if p_point['value']>0]
 
     #Group all points by the imaghe they belong to
     grouped_by_image = defaultdict(list)
@@ -306,7 +370,7 @@ class query_finder():
                         features = tf.convert_to_tensor(features)
                         features = tf.dtypes.cast(features, tf.float32)
 
-                        print('features shape:{0} \n query_shape: {1}'.format(features.shape, final_query_features.shape))
+                        print('features shape:{0} \nquery_shape: {1}'.format(features.shape, final_query_features.shape))
 
                         #convolution between feature batch of images and features of the query 
                         heatmaps = tf.nn.convolution(features, final_query_features, padding = 'SAME', strides=[1,1,1,1])
@@ -321,11 +385,13 @@ class query_finder():
                         #Deletion of heatmap borders, for treating border abnormalities due to padding in the images
                         heatmaps = delete_border_values(heatmaps, original_image_sizes, query)
 
+                        t_points=time()
                         #create db with all the maximum points found 
                         if(batch_counter == 0):
-                            p_points = get_p_maximum_values_optimized(image_ids, heatmaps, query, params.p)
+                            p_points = get_p_maximum_values(image_ids, heatmaps, query, params.p)
                         else:
-                            p_points = np.concatenate( (p_points, get_p_maximum_values_optimized(image_ids, heatmaps, query, params.p)) )
+                            p_points = np.concatenate( (p_points, get_p_maximum_values(image_ids, heatmaps, query, params.p)) )
+                        print('Time searching points: {}'.format(time()-t_points))
                         
 
                         print('Batch {0} processed in {1}'.format(batch_counter, time()-t_batch))
@@ -339,7 +405,7 @@ class query_finder():
                 t_procesamiento = time()-t_inicio
                 print('t_procesamiento', t_procesamiento)
 
-
+                print(p_points)
 
                 #Get top porcentaje of sorted id images and their detections         
                 top_images_ids, top_images_detections = get_top_images(p_points,100,100)

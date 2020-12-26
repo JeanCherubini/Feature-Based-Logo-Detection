@@ -34,8 +34,11 @@ if __name__ == '__main__' :
         for query_instance in instances:
             try:
                 result_query = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class, query_instance.replace('.png','').replace('.jpg','')),'r')
+                last_row=''
                 for row in result_query:
-                    all_detections.write(query_instance.replace('.png','').replace('.jpg','') + ' ' + row)
+                    if row!=last_row:
+                        all_detections.write(query_instance.replace('.png','').replace('.jpg','') + ' ' + row)
+                        last_row = row
                 result_query.close()
             except:
                 errors.write('Error finding detections for query class {} instance {}\n'.format(query_class, query_instance.replace('.png','').replace('.jpg','')))

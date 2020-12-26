@@ -180,11 +180,21 @@ class AP_calculator_class():
         
 
         ordered_detections = collections.OrderedDict(sorted(detections.items(), reverse=True))
-        return ordered_detections, train_images
+        return ordered_detections
 
 
-    def calculate_query(self, params, query_class, query_instance, ordered_detections, train_images):
-        
+    def calculate_query(self, params, query_class, query_instance, ordered_detections):
+        #creation of dataset like coco
+        train_images = CocoLikeDataset()
+        train_images.load_data(params.annotation_json, params.coco_images)
+        train_images.prepare()
+
+        classes_dictionary = train_images.class_info
+        query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==query_class][0]
+
+        #load desired query results
+        query_results = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class,query_instance.replace('.png','').replace('.jpg','')), 'r')
+
 
 
         #get all ground truth annotations for the class of the query
@@ -231,7 +241,19 @@ class AP_calculator_class():
         file_AP.close()
         return 0
 
-    def plt_top_detections(self, params, query_class, query_instance, ordered_detections, train_images):
+    def plt_top_detections(self, params, query_class, query_instance, ordered_detections):
+
+        #creation of dataset like coco
+        train_images = CocoLikeDataset()
+        train_images.load_data(params.annotation_json, params.coco_images)
+        train_images.prepare()
+
+        classes_dictionary = train_images.class_info
+        query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==query_class][0]
+
+        #load desired query results
+        query_results = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class,query_instance.replace('.png','').replace('.jpg','')), 'r')
+
         #create figure to show query
         #plt.figure()
         #plt.imshow(query)
@@ -253,7 +275,8 @@ class AP_calculator_class():
                     plt.savefig('{0}/{1}/{2}/results/{3}/{4}_top_{5}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class, query_instance, str(i)))
                     '''
                     plt.show(block=False)
-                    plt.pause(3)
+                    plt.pause(3)            
+
                     plt.close()
                     '''
                 fig, ([ax0, ax1, ax2, ax3, ax4], [ax5, ax6, ax7, ax8, ax9]) = plt.subplots(2, 5, sharey=False, figsize=(25,15))
