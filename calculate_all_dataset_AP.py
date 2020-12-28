@@ -29,13 +29,15 @@ if __name__ == '__main__' :
     for query_class in query_classes:
         instances = os.listdir('{0}/{1}'.format(params.query_path, query_class))
         for query_instance in instances:
-            ordered_detections = AP_calculator.get_ordered_detections(params, query_class, query_instance)
-            AP_calculator.plt_top_detections(params, query_class, query_instance, ordered_detections)
-            AP_calculator.calculate_query(params, query_class, query_instance, ordered_detections)
-            file_ap = open('{0}/{1}/{2}/AP/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class, query_instance.replace('.png', '').replace('.jpg','')), 'r')    
-            AP = file_ap.readline()
-            file_ap.close()
-            file_all_ap.write(query_instance.replace('.png', '').replace('.jpg','') + ' ' + AP + '\n')
-            print('Detections file for query class {0} instance {1} not found'.format(query_class, query_instance))
+            try:
+                ordered_detections = AP_calculator.get_ordered_detections(params, query_class, query_instance)
+                AP_calculator.plt_top_detections(params, query_class, query_instance, ordered_detections)
+                AP_calculator.calculate_query(params, query_class, query_instance, ordered_detections)
+                file_ap = open('{0}/{1}/{2}/AP/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class, query_instance.replace('.png', '').replace('.jpg','')), 'r')    
+                AP = file_ap.readline()
+                file_ap.close()
+                file_all_ap.write(query_instance.replace('.png', '').replace('.jpg','') + ' ' + AP + '\n')
+            except:
+                print('Detections file for query class {0} instance {1} not found'.format(query_class, query_instance))
     
     file_all_ap.close()

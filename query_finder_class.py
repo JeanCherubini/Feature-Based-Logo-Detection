@@ -90,6 +90,7 @@ def get_p_maximum_values(image_ids, heatmaps, query, p):
             y_del_end = y_max + x_deletion_query
             
             '''
+            #Show points rescued
             fig, axs = plt.subplots(1, 1, sharey=False, figsize=(25,15))
             axs.imshow(current_hmap)
             cntr = Rectangle((x_max, y_max), 3, 3, edgecolor='b', facecolor="r")
@@ -103,14 +104,13 @@ def get_p_maximum_values(image_ids, heatmaps, query, p):
 
             right_point = Rectangle((x_del_end, y_del_end), 2, 2, edgecolor='g', facecolor="r")
             axs.add_patch(right_point)
-
+            print('x_max',x_max, 'y_max',y_max,'bbox',x_del_begin, y_del_begin, x_del_end-x_del_begin, y_del_end-y_del_begin)
             plt.show()
             '''
 
             current_hmap[y_del_begin:y_del_end, x_del_begin:x_del_end] = 0
  
             point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin, y_del_begin, x_del_end-x_del_begin, y_del_end-y_del_begin], 'value':maximum_value} 
-
             p_points.append(point)
 
             
@@ -399,45 +399,50 @@ class query_finder():
                 t_procesamiento = time()-t_inicio
                 print('t_procesamiento', t_procesamiento)
 
-                #Get top porcentaje of sorted id images and their detections         
-                top_images_ids, top_images_detections = get_top_images(p_points,100,100)
+                try:
+                    #Get top porcentaje of sorted id images and their detections         
+                    top_images_ids, top_images_detections = get_top_images(p_points,100,100)
 
-                
-                #create folder for results
-                if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name):
-                    os.mkdir(params.feat_savedir +'/' + params.dataset_name)
-
-                if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/detections'):
-                    os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/detections')
-
-                if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/detections/'+query_class):
-                    os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/detections/'+query_class)
-
-                results = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer , query_class, query_instance.replace('.png','').replace('.jpg','')),'w')
-                #create figure to show query
                     
-                
-                
-                for id_ in top_images_ids:    
-                    
-                    #get detections for this image
-                    bounding_box, values = get_bounding_boxes([id_], top_images_detections, query)
-                
-                    for j in range(len(bounding_box[id_])):
-                        x1, y1, height, width = bounding_box[id_][j]
-                        value = values[id_][j]
-                        if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
-                            results_text = '{0} {1} {2} {3} {4} {5:.3f} {6}\n'.format(id_, x1, y1, width, height, value,  query_class_num)
-                            results.write(results_text)
-                    '''    
-                    for bbox in bounding_box[id_]:
-                        x1, y1, height, width = bbox
-                        if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
-                            results_text = '{0} {1} {2} {3} {4} {5}\n'.format(id_, x1, y1, width, height, query_class_num)
-                            results.write(results_text)
-                    '''
-                results.close()
-                return 1
+                    #create folder for results
+                    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name):
+                        os.mkdir(params.feat_savedir +'/' + params.dataset_name)
 
+                    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/detections'):
+                        os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/detections')
+
+                    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/detections/'+query_class):
+                        os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/detections/'+query_class)
+
+                    results = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer , query_class, query_instance.replace('.png','').replace('.jpg','')),'w')
+                    #create figure to show query
+                        
+                    
+                    
+                    for id_ in top_images_ids:    
+                        
+                        #get detections for this image
+                        bounding_box, values = get_bounding_boxes([id_], top_images_detections, query)
+                    
+                        for j in range(len(bounding_box[id_])):
+                            x1, y1, height, width = bounding_box[id_][j]
+                            value = values[id_][j]
+                            if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
+                                results_text = '{0} {1} {2} {3} {4} {5:.3f} {6}\n'.format(id_, x1, y1, width, height, value,  query_class_num)
+                                results.write(results_text)
+                        '''    
+                        for bbox in bounding_box[id_]:
+                            x1, y1, height, width = bbox
+                            if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
+                                results_text = '{0} {1} {2} {3} {4} {5}\n'.format(id_, x1, y1, width, height, query_class_num)
+                                results.write(results_text)
+                        '''
+                    results.close()
+                    return 1
+                except:
+                    errors = open('{0}/{1}/{2}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer),'w')
+                    errors.write('Error finding detections for query class {} instance {}\n'.format(query_class, query_instance.replace('.png','').replace('.jpg','')))
+                    print("No se encontraron puntos suficientes")
+                    return 0
 
 
