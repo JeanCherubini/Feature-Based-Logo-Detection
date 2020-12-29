@@ -378,9 +378,9 @@ class Dataset(object):
         annotations = self.image_info[image_id]['annotations']
         annotations_list = []
         for annot in annotations:
-            x1, y1, width, height = annot['bbox']
+            x1, y1, height, width = annot['bbox']
             label = annot['category_id']
-            annotations_list.append([x1, y1, width, height, label])
+            annotations_list.append([x1, y1, height, width, label])
         return np.array(annotations_list)
 
     def load_image_batch(self, ids_list):
@@ -390,7 +390,7 @@ class Dataset(object):
         image_sizes_list = []
         for _id in ids_list:
             image = self.load_image(_id)
-            width,height,channels = image.shape
+            height, width, channels = image.shape
             image_sizes_list.append(image.shape)
             if width>max_width:
                 max_width = width
@@ -398,12 +398,12 @@ class Dataset(object):
                 max_height = height
             images_list.append(image)
 
-        canvas = np.zeros([len(ids_list),max_width,max_height,channels])
+        canvas = np.zeros([len(ids_list),max_height,max_width,channels])
 
         for n in range(len(images_list)):
             img = images_list[n]
-            width,height,channels = img.shape
-            canvas[n,:width,:height,:channels] = img
+            height, width, channels = img.shape
+            canvas[n,:height,:width,:channels] = img
 
         return {'padded_images':canvas, 'original_sizes':image_sizes_list, 'padded_batch_size':canvas.shape}
 

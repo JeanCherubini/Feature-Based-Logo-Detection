@@ -36,7 +36,7 @@ if __name__ == '__main__' :
     params = parser.parse_args()    
 
     AP_calculator = AP_calculator_class()
-
-    AP_calculator.calculate_query(self, params, query_class, query_instance, ordered_detections, train_images)
-
     
+    ordered_detections = AP_calculator.get_ordered_detections(params, params.query_class, params.query_instance)
+    AP_calculator.plt_top_detections(params, params.query_class, params.query_instance, ordered_detections)
+    AP_calculator.calculate_query(params, params.query_class, params.query_instance, ordered_detections)

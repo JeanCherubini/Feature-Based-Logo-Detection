@@ -43,8 +43,8 @@ def get_query(query_path, query_class, instance):
 
 def delete_border_values(heatmaps, original_image_sizes, query):
     t_deletion = time()
-    n, width, height, channels = heatmaps.shape
-    width_query, height_query, _= query.shape
+    n, height, width, channels = heatmaps.shape
+    height_query, width_query , _ = query.shape
 
     x_elimination_border_query = int(width_query/2)
     y_elimination_border_query = int(height_query/2)
@@ -53,22 +53,23 @@ def delete_border_values(heatmaps, original_image_sizes, query):
     
     #delete original padding
     for hmap_index in range(n):
-        o_width, o_height, _ = original_image_sizes[hmap_index]
-        extracted_image = heatmaps[hmap_index, x_elimination_border_query:o_width - x_elimination_border_query, y_elimination_border_query:o_height-y_elimination_border_query, :]
+        o_height, o_width, _ = original_image_sizes[hmap_index]
+        extracted_image = heatmaps[hmap_index, y_elimination_border_query:o_height-y_elimination_border_query, x_elimination_border_query:o_width - x_elimination_border_query, :]
         
-        canvas[hmap_index, x_elimination_border_query:o_width - x_elimination_border_query, y_elimination_border_query:o_height-y_elimination_border_query, :] = extracted_image
+        canvas[hmap_index, y_elimination_border_query:o_height-y_elimination_border_query, x_elimination_border_query:o_width - x_elimination_border_query, :] = extracted_image
 
     heatmaps = tf.convert_to_tensor(canvas)
     print('Time on deleting borders: {:.3f}'.format(time()-t_deletion))
     return heatmaps
 
 def get_p_maximum_values(image_ids, heatmaps, query, p):
-    n, width, height, channels = heatmaps.shape
-    width_query, height_query, _= query.shape
+    n, height, width, channels = heatmaps.shape
+    height_query, width_query, _= query.shape
     x_deletion_query = int(width_query/2)
     y_deletion_query = int(height_query/2)
-
+    
     #print(np.unravel_index(np.argmax(heatmaps), heatmaps.shape))
+    print('query_shape', query.shape)
 
     p_points = []
 
@@ -77,40 +78,37 @@ def get_p_maximum_values(image_ids, heatmaps, query, p):
 
         for p_num in range(p):
             
-            y_max,x_max, _ = np.unravel_index(np.argmax(current_hmap), current_hmap.shape)
+            y_max, x_max, _ = np.unravel_index(np.argmax(current_hmap), current_hmap.shape)
 
             maximum_value = np.max(current_hmap)
 
-            x_del_begin = x_max - y_deletion_query
+            x_del_begin = x_max - x_deletion_query
             
-            y_del_begin = y_max - x_deletion_query
+            y_del_begin = y_max - y_deletion_query
 
-            x_del_end = x_max + y_deletion_query
 
-            y_del_end = y_max + x_deletion_query
-            
             '''
             #Show points rescued
             fig, axs = plt.subplots(1, 1, sharey=False, figsize=(25,15))
             axs.imshow(current_hmap)
             cntr = Rectangle((x_max, y_max), 3, 3, edgecolor='b', facecolor="r")
             axs.add_patch(cntr)
-            rect = Rectangle((x_del_begin, y_del_begin), x_del_end-x_del_begin, y_del_end-y_del_begin, edgecolor='g', facecolor="none")
+            rect = Rectangle((x_del_begin, y_del_begin), width_query, height_query, edgecolor='g', facecolor="none")
             axs.add_patch(rect)
 
 
             left_point = Rectangle((x_del_begin, y_del_begin), 2, 2, edgecolor='g', facecolor="r")
             axs.add_patch(left_point)
 
-            right_point = Rectangle((x_del_end, y_del_end), 2, 2, edgecolor='g', facecolor="r")
+            right_point = Rectangle((x_del_begin + width_query, y_del_begin + height_query), 2, 2, edgecolor='g', facecolor="r")
             axs.add_patch(right_point)
-            print('x_max',x_max, 'y_max',y_max,'bbox',x_del_begin, y_del_begin, x_del_end-x_del_begin, y_del_end-y_del_begin)
+            print('x_max',x_max, 'y_max',y_max,'bbox',x_del_begin, y_del_begin, height_query, width_query)
             plt.show()
             '''
 
-            current_hmap[y_del_begin:y_del_end, x_del_begin:x_del_end] = 0
+            current_hmap[y_del_begin:y_del_begin + height_query, x_del_begin:x_del_begin + width_query] = 0
  
-            point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin, y_del_begin, x_del_end-x_del_begin, y_del_end-y_del_begin], 'value':maximum_value} 
+            point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin, y_del_begin, height_query, width_query], 'value':maximum_value} 
             p_points.append(point)
 
             
@@ -120,8 +118,8 @@ def get_p_maximum_values(image_ids, heatmaps, query, p):
 
 def get_p_maximum_values_optimized(image_ids, heatmaps, query, p):
     t1 = time()
-    n, width, height, channels = heatmaps.shape
-    width_query, height_query, _= query.shape
+    n, height, width, channels = heatmaps.shape
+    height_query, width_query, _= query.shape
 
     #Range to delete from the borders, depends on query shape
     x_deletion_query = math.floor(width_query/2)
@@ -215,7 +213,7 @@ def get_top_images(p_points, global_top_percentage, in_image_top_porcentage):
 
 def get_bounding_boxes(top_images_ids, top_images_detections, query):
 
-    width_query, height_query, _= query.shape
+    height_query, width_query,_= query.shape
     bboxes = {}
     values = {}
     
@@ -287,10 +285,10 @@ class query_finder():
                 #Queryu procesing
                 features_query = intermediate_model(query, training=False)
 
-                b, width, height, channels = features_query.shape
+                b, height, width, channels = features_query.shape
                 
                 #features reshaped for PCA transformation
-                features_reshaped_PCA = tf.reshape(features_query, (b*width*height,channels))
+                features_reshaped_PCA = tf.reshape(features_query, (b*height*width,channels))
                 
                 #PCA
                 pca_features = pca.transform(features_reshaped_PCA)
@@ -300,17 +298,17 @@ class query_finder():
                                 epsilon=1e-12, name=None)
 
                 #Go back to original shape
-                final_query_features = tf.reshape(pca_features, (width,height,pca_features.shape[-1]))
+                final_query_features = tf.reshape(pca_features, (height, width,pca_features.shape[-1]))
 
 
                 #Resize big queries
-                width_feat_query, height_feat_query, channels_feat_query = final_query_features.shape
+                height_feat_query, width_feat_query, channels_feat_query = final_query_features.shape
 
 
                 while width_feat_query>150 or height_feat_query>150:
-                    final_query_features = tf.image.resize(final_query_features, [int(width_feat_query*0.75), int(height_feat_query*0.75)], preserve_aspect_ratio = True)
-                    width_feat_query, height_feat_query, channels_feat_query = final_query_features.shape
-                    print('query_shape resized:', width_feat_query, height_feat_query, channels_feat_query)
+                    final_query_features = tf.image.resize(final_query_features, [int(height_feat_query*0.75), int(width_feat_query*0.75)], preserve_aspect_ratio = True)
+                    height_feat_query, width_feat_query, channels_feat_query = final_query_features.shape
+                    print('query_shape resized:', height_feat_query, width_feat_query, channels_feat_query)
          
 
                 #Casting ino float32 dtype
@@ -356,7 +354,7 @@ class query_finder():
                         original_image_sizes = train_images.load_image_batch(image_ids)['original_sizes']
 
                         #shape of the batch with padding
-                        original_batches, original_width, original_height, original_channels = train_images.load_image_batch(image_ids)['padded_batch_size']
+                        original_batches, original_height, original_width, original_channels = train_images.load_image_batch(image_ids)['padded_batch_size']
 
                         t_conv = time()
 
@@ -374,7 +372,7 @@ class query_finder():
                         print('time on convolutions: {:.3f}'.format(time()-t_conv))
 
                         #interpolation to original image shapes
-                        heatmaps = tf.image.resize(heatmaps, (original_width, original_height), method=tf.image.ResizeMethod.BICUBIC)
+                        heatmaps = tf.image.resize(heatmaps, (original_height, original_width), method=tf.image.ResizeMethod.BICUBIC)
 
                         #Deletion of heatmap borders, for treating border abnormalities due to padding in the images
                         heatmaps = delete_border_values(heatmaps, original_image_sizes, query)
@@ -427,14 +425,14 @@ class query_finder():
                         for j in range(len(bounding_box[id_])):
                             x1, y1, height, width = bounding_box[id_][j]
                             value = values[id_][j]
-                            if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
-                                results_text = '{0} {1} {2} {3} {4} {5:.3f} {6}\n'.format(id_, x1, y1, width, height, value,  query_class_num)
+                            if not ([x1, y1, height, width]==[0 ,0 , 0 ,0]):
+                                results_text = '{0} {1} {2} {3} {4} {5:.3f} {6}\n'.format(id_, x1, y1, height, width, value,  query_class_num)
                                 results.write(results_text)
                         '''    
                         for bbox in bounding_box[id_]:
                             x1, y1, height, width = bbox
-                            if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
-                                results_text = '{0} {1} {2} {3} {4} {5}\n'.format(id_, x1, y1, width, height, query_class_num)
+                            if not ([x1, y1, height, width]==[0 ,0 , 0 ,0]):
+                                results_text = '{0} {1} {2} {3} {4} {5}\n'.format(id_, x1, y1, height, width, query_class_num)
                                 results.write(results_text)
                         '''
                     results.close()

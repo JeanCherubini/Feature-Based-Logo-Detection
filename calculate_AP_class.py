@@ -286,22 +286,23 @@ class AP_calculator_class():
             #image load
             image = train_images.load_image(id_)
             axs[n].imshow(image)
+            axs[n].axis('off')
             
 
             #get detections for this image
 
             bbox = ordered_detections[value,id_]
 
-            x1, y1, width, height = bbox
-            if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
+            x1, y1, height, width = bbox
+            if not ([x1, y1, height, width]==[0 ,0 , 0 ,0]):
                 rect = Rectangle((x1,y1), width, height, edgecolor='r', facecolor="none")
                 axs[n].add_patch(rect)
             try:
                 #get ground truth for this image
                 annotation = train_images.load_annotations([id_])
                 for ann in annotation:
-                    x1, y1 ,width ,height, label = ann 
-                    if not ([x1, y1, width, height]==[0 ,0 , 0 ,0]):
+                    x1, y1 ,height, width , label = ann 
+                    if not ([x1, y1, height, width]==[0 ,0 , 0 ,0]):
                         if(int(query_class_num)==int(label)):         
                             rect = Rectangle((x1,y1), width, height, edgecolor='g', facecolor="none")
                             axs[n].add_patch(rect)

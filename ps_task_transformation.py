@@ -35,7 +35,7 @@ if __name__ == '__main__' :
     counter_query_id = {}
     for row in all_detections_ordered:
         #image retrieval
-        query_id, image_detected, x1, y1, width, height, value, query_class = row.split(' ') 
+        query_id, image_detected, x1, y1, height, width, value, query_class = row.split(' ') 
         
         image_info = train_images.image_info[int(image_detected)]
         page = os.path.basename(image_info['path'])

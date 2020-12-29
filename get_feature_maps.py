@@ -37,10 +37,10 @@ def yield_batch_for_PCA(batches):
             #features extracted
             features_batch = intermediate_model(images, training=False)
 
-            b, width, height, channels = features_batch.shape
+            b, height, width, channels = features_batch.shape
             
             #features reshaped for PCA transformation
-            features_reshaped_PCA = tf.reshape(features_batch, (b*width*height,channels))
+            features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
             print('features reshaped for PCA', features_reshaped_PCA.shape)
 
             batch_counter+=1
@@ -170,10 +170,10 @@ if __name__ == '__main__' :
                 #features extracted
                 features_batch = intermediate_model(images, training=False)
 
-                b, width, height, channels = features_batch.shape
+                b, height, width, channels = features_batch.shape
                 
                 #features reshaped for PCA transformation
-                features_reshaped_PCA = tf.reshape(features_batch, (b*width*height,channels))
+                features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
                 
                 #PCA
                 pca_features = pca.transform(features_reshaped_PCA)
@@ -183,7 +183,7 @@ if __name__ == '__main__' :
                                 epsilon=1e-12, name=None)
 
                 #Go back to original shape
-                features_to_save = tf.reshape(pca_features, (b,width,height,params.principal_components))
+                features_to_save = tf.reshape(pca_features, (b,height,width,params.principal_components))
 
 
 
@@ -216,10 +216,10 @@ if __name__ == '__main__' :
                     #features extracted
                     features_batch = intermediate_model(images, training=False)
 
-                    b, width, height, channels = features_batch.shape
+                    b, height, width, channels = features_batch.shape
                     
                     #features reshaped for PCA transformation
-                    features_reshaped_PCA = tf.reshape(features_batch, (b*width*height,channels))
+                    features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
                     
                     #PCA
                     pca_features = pca.transform(features_reshaped_PCA)
@@ -229,7 +229,7 @@ if __name__ == '__main__' :
                                     epsilon=1e-12, name=None)
 
                     #Go back to original shape
-                    features_to_save = tf.reshape(pca_features, (b,width,height,params.principal_components))
+                    features_to_save = tf.reshape(pca_features, (b,height, width,params.principal_components))
 
                     np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations})
 
@@ -267,10 +267,10 @@ if __name__ == '__main__' :
             #features extracted
             features_batch = intermediate_model(images, training=False)
 
-            b, width, height, channels = features_batch.shape
+            b, height, width, channels = features_batch.shape
             
             #features reshaped for PCA transformation
-            features_reshaped_PCA = tf.reshape(features_batch, (b*width*height,channels))
+            features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
             
             #PCA
             pca_features = pca.transform(features_reshaped_PCA)
@@ -280,7 +280,7 @@ if __name__ == '__main__' :
                             epsilon=1e-12, name=None)
 
             #Go back to original shape
-            features_to_save = tf.reshape(pca_features, (b,width,height,params.principal_components))
+            features_to_save = tf.reshape(pca_features, (b,height,width,params.principal_components))
 
             np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':[big_image], 'features':features_to_save, 'annotations':annotations})
 

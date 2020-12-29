@@ -74,8 +74,8 @@ if __name__ == '__main__' :
     '''
     for row in all_detections:
         #image retrieval
-        query_id, image_detected, x1, y1, width, height, value, query_class = row.split(' ') 
-        detections_by_value_and_query_id[float(value), query_id, x1]=[query_id, image_detected, x1, y1, width, height, value, query_class]
+        query_id, image_detected, x1, y1, height, width, value, query_class = row.split(' ') 
+        detections_by_value_and_query_id[float(value), query_id, x1]=[query_id, image_detected, x1, y1, height, width, value, query_class]
     
 
     ordered_detections = sorted(detections_by_value_and_query_id,reverse=True)
@@ -83,18 +83,18 @@ if __name__ == '__main__' :
     for key in ordered_detections.keys():
         value, query_id = key
         print(value, query_id)
-        query_id, image_detected, x1, y1, width, height, value, query_class = detections_by_value_and_query_id[key]
+        query_id, image_detected, x1, y1, height, width, value, query_class = detections_by_value_and_query_id[key]
         
     '''
     '''
         image = train_images.load_image(int(image_detected))
         fig, ax0 = plt.subplots(1,1)
         ax0.imshow(image)
-        rect = Rectangle((int(x1),int(y1)), int(width), int(height), edgecolor='g', facecolor="none")
+        rect = Rectangle((int(x1),int(y1)), int(height), int(width), edgecolor='g', facecolor="none")
         ax0.add_patch(rect)
         plt.show()
     
 
         if float(value)>=params.th_value:
-            all_detections_ordered.write('{0} {1} {2} {3} {4} {5} {6} {7}'.format(query_id, image_detected, x1, y1, width, height, value, query_class))
+            all_detections_ordered.write('{0} {1} {2} {3} {4} {5} {6} {7}'.format(query_id, image_detected, x1, y1, height, width, value, query_class))
     '''
