@@ -236,7 +236,7 @@ class query_finder():
     
     def search_query(self, params, query_class, query_instance):
         #check if result already exists
-            if(os.path.isfile('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class, query_instance.replace('.png','').replace('.jpg','')))):
+            if(os.path.isfile('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png','').replace('.jpg','')))):
                 print('Results for {} already exist!'.format(query_instance.replace('.png','').replace('.jpg','')))
                 return 0
             else: 
@@ -412,7 +412,7 @@ class query_finder():
                     if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/detections/'+query_class):
                         os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/detections/'+query_class)
 
-                    results = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer , query_class, query_instance.replace('.png','').replace('.jpg','')),'w')
+                    results = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'w')
                     #create figure to show query
                         
                     
