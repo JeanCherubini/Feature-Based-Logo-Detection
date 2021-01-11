@@ -383,7 +383,11 @@ class Dataset(object):
             annotations_list.append([x1, y1, height, width, label])
         return np.array(annotations_list)
 
-    def load_image_batch(self, ids_list):
+    def next_power_of_2(self,x):  
+        return 1 if x == 0 else 2**(x - 1).bit_length()
+
+
+    def load_image_batch(self, ids_list, model):
         max_width = 0
         max_height = 0
         images_list = []
@@ -398,7 +402,11 @@ class Dataset(object):
                 max_height = height
             images_list.append(image)
 
-        canvas = np.zeros([len(ids_list),max_height,max_width,channels])
+        if model == 'retinanet':
+            canvas = np.zeros([len(ids_list),self.next_power_of_2(max_height),self.next_power_of_2(max_width),channels])
+        else:
+            canvas = np.zeros([len(ids_list),max_height,max_width,channels])
+
 
         for n in range(len(images_list)):
             img = images_list[n]
@@ -427,8 +435,8 @@ class Dataset(object):
         return canvas
 
 
-    def load_all_images(self):
-        return self.load_image_batch(self._image_ids)
+    def load_all_images(self, model):
+        return self.load_image_batch(self._image_ids, model)
 
     def load_all_annotations(self):
         return self.load_annotations_batch(self._image_ids)

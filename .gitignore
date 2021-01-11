@@ -131,3 +131,5 @@ dmypy.json
 #ignored folders
 /pre-trained
 /datasets
+/snapshots
+models/retinanet/retinanet

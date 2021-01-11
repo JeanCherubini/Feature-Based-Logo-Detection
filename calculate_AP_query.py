@@ -39,4 +39,4 @@ if __name__ == '__main__' :
     
     ordered_detections = AP_calculator.get_ordered_detections(params, params.query_class, params.query_instance)
     AP_calculator.plt_top_detections(params, params.query_class, params.query_instance, ordered_detections)
-    AP_calculator.calculate_query(params, params.query_class, params.query_instance, ordered_detections)
+    #AP_calculator.calculate_query(params, params.query_class, params.query_instance, ordered_detections)

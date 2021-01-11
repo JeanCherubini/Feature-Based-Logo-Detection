@@ -164,7 +164,7 @@ class AP_calculator_class():
         query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==query_class][0]
 
         #load desired query results
-        query_results = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class,query_instance.replace('.png','').replace('.jpg','')), 'r')
+        query_results = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class,query_instance.replace('.png','').replace('.jpg','')), 'r')
 
         #get all detections for each image
         detections = {}
@@ -193,7 +193,7 @@ class AP_calculator_class():
         query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==query_class][0]
 
         #load desired query results
-        query_results = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class,query_instance.replace('.png','').replace('.jpg','')), 'r')
+        query_results = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,query_class,query_instance.replace('.png','').replace('.jpg','')), 'r')
 
 
 
@@ -221,13 +221,13 @@ class AP_calculator_class():
         APS = {}
 
 
-        if not os.path.isdir('{0}/{1}/{2}/AP'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer)):
-            os.mkdir('{0}/{1}/{2}/AP'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer))
+        if not os.path.isdir('{0}/{1}/{2}/{3}/AP'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)):
+            os.mkdir('{0}/{1}/{2}/{3}/AP'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components))
         
-        if not os.path.isdir('{0}/{1}/{2}/AP/{3}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class)):
-            os.mkdir('{0}/{1}/{2}/AP/{3}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class))
+        if not os.path.isdir('{0}/{1}/{2}/{3}/AP/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class)):
+            os.mkdir('{0}/{1}/{2}/{3}/AP/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class))
         
-        file_AP = open('{0}/{1}/{2}/AP/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class, query_instance.replace('.png', '').replace('.jpg','')), 'w')
+        file_AP = open('{0}/{1}/{2}/{3}/AP/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer,params.principal_components , query_class, query_instance.replace('.png', '').replace('.jpg','')), 'w')
 
         for iou in multiple_ious:
             #calculate precision recall
@@ -252,19 +252,19 @@ class AP_calculator_class():
         query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==query_class][0]
 
         #load desired query results
-        query_results = open('{0}/{1}/{2}/detections/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class,query_instance.replace('.png','').replace('.jpg','')), 'r')
+        query_results = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class,query_instance.replace('.png','').replace('.jpg','')), 'r')
 
         #create figure to show query
         #plt.figure()
         #plt.imshow(query)
-        if not os.path.isdir('{0}/{1}/{2}/results'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer)):
-            os.mkdir('{0}/{1}/{2}/results'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer))
+        if not os.path.isdir('{0}/{1}/{2}/{3}/results'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)):
+            os.mkdir('{0}/{1}/{2}/{3}/results'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components))
 
-        if not os.path.isdir('{0}/{1}/{2}/results/{3}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class)):
-            os.mkdir('{0}/{1}/{2}/results/{3}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class))
+        if not os.path.isdir('{0}/{1}/{2}/{3}/results/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class)):
+            os.mkdir('{0}/{1}/{2}/{3}/results/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer,params.principal_components,  query_class))
         
-        if not os.path.isdir('{0}/{1}/{2}/results/{3}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class)):
-            os.mkdir('{0}/{1}/{2}/results/{3}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class))
+        if not os.path.isdir('{0}/{1}/{2}//{3}/results/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class)):
+            os.mkdir('{0}/{1}/{2}/{3}/results/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class))
         
 
         for i,(value,id_) in enumerate(ordered_detections.keys()):
@@ -272,7 +272,7 @@ class AP_calculator_class():
             n=i%10
             if n==0:
                 if i!=0:
-                    plt.savefig('{0}/{1}/{2}/results/{3}/{4}_top_{5}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class, query_instance, str(i)))
+                    plt.savefig('{0}/{1}/{2}/{3}/results/{4}/{5}_top_{6}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance, str(i)))
                     '''
                     plt.show(block=False)
                     plt.pause(3)            
@@ -284,6 +284,7 @@ class AP_calculator_class():
             
 
             #image load
+            print(train_images.num_images)
             image = train_images.load_image(id_)
             axs[n].imshow(image)
             axs[n].axis('off')
@@ -295,23 +296,33 @@ class AP_calculator_class():
 
             x1, y1, height, width = bbox
             if not ([x1, y1, height, width]==[0 ,0 , 0 ,0]):
-                rect = Rectangle((x1,y1), width, height, edgecolor='r', facecolor="none")
+                rect = Rectangle((x1,y1), width, height, edgecolor='b', facecolor="none")
                 axs[n].add_patch(rect)
+                axs[n].text(x1, y1+height, params.query_class, color='b')
             try:
                 #get ground truth for this image
-                annotation = train_images.load_annotations([id_])
-                for ann in annotation:
-                    x1, y1 ,height, width , label = ann 
-                    if not ([x1, y1, height, width]==[0 ,0 , 0 ,0]):
-                        if(int(query_class_num)==int(label)):         
+                annotations = train_images.image_info[id_]['annotations']
+                for ann in annotations:
+                    x1, y1 ,width, height = ann['bbox']
+                    label_number = ann['category_id']
+                    label = [cat['name'] for cat in classes_dictionary if cat['id']==label_number][0]
+                    if not ([x1, y1, width, height]==[]):
+                        if(int(query_class_num)==int(label_number)):         
                             rect = Rectangle((x1,y1), width, height, edgecolor='g', facecolor="none")
                             axs[n].add_patch(rect)
+                            axs[n].text(x1, y1, label, color='g')
+                        else:         
+                            rect = Rectangle((x1,y1), width, height, edgecolor='r', facecolor="none")
+                            axs[n].add_patch(rect)
+                            axs[n].text(x1, y1, label, color='r')
+
             except:
+                print('Annotation not found')
                 continue
             
 
         
-        plt.savefig('{0}/{1}/{2}/results/{3}/{4}_top_{5}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class, query_instance, 'last'))
+        plt.savefig('{0}/{1}/{2}/{3}/results/{4}/{5}_top_{6}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance, 'last'))
         '''
         plt.show(block=False)
         plt.pause(3)

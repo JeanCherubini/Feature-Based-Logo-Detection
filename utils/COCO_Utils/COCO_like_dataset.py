@@ -66,7 +66,10 @@ class CocoLikeDataset(utils_coco.Dataset):
                     print("Warning: Skipping image (id: {}) with missing key: {}".format(image_id, key))
                 
                 image_path = os.path.abspath(os.path.join(images_dir, image_file_name))
-                image_annotations = annotations[image_id]
+                try:
+                    image_annotations = annotations[image_id]
+                except:
+                    image_annotations = [{}]
                 
                 # Add the image using the base method from utils.Dataset
                 self.add_image(

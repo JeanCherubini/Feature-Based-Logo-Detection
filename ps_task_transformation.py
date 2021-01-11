@@ -17,6 +17,8 @@ if __name__ == '__main__' :
     parser.add_argument('-model', help='model used for the convolutional features', type=str, choices=['resnet', 'VGG16'], default='VGG16') 
     parser.add_argument('-layer', help='resnet layer used for extraction', type=str, choices=['conv1_relu', 'conv2_block3_out', 'conv3_block4_out', 'conv4_block6_out', 'conv5_block3_out', 'block3_conv3', 'block4_conv3', 'block5_conv3'], default='block3_conv3') 
     parser.add_argument('-feat_savedir', help='directory of features database', type=str, default='/home/jeancherubini/Documents/feature_maps')
+    parser.add_argument('-principal_components', help='amount of components kept (depth of feature vectors)', type=str, default='64')   
+
 
     params = parser.parse_args()    
 
@@ -27,7 +29,7 @@ if __name__ == '__main__' :
     train_images.prepare()
 
     #Open all detections document
-    all_detections_ordered = open('{0}/{1}/{2}/detections/all_detections_ordered.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer),'r')
+    all_detections_ordered = open('{0}/{1}/{2}/{3}/detections/all_detections_ordered.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'r')
 
     #Create dict to group by query for pattern spotting
     detections_by_query_id = {}
@@ -62,8 +64,8 @@ if __name__ == '__main__' :
 
 
     #open file to sav ps
-    ps_for_DocExplore = open('{0}/{1}/{2}/detections/ps_for_DocExplore.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer),'w')
-    ir_for_DocExplore = open('{0}/{1}/{2}/detections/ir_for_DocExplore.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer),'w')
+    ps_for_DocExplore = open('{0}/{1}/{2}/{3}/detections/ps_for_DocExplore.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
+    ir_for_DocExplore = open('{0}/{1}/{2}/{3}/detections/ir_for_DocExplore.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
 
 
     for query_class in os.listdir(params.query_path):
