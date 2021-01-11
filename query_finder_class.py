@@ -406,11 +406,11 @@ class query_finder():
                     if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name):
                         os.mkdir(params.feat_savedir +'/' + params.dataset_name)
 
-                    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/detections'):
-                        os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/detections')
+                    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + params.principal_components + '/detections'):
+                        os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + params.principal_components + '/detections')
 
-                    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/detections/'+query_class):
-                        os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/detections/'+query_class)
+                    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + params.principal_components + '/detections/'+query_class):
+                        os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + params.principal_components + '/detections/'+query_class)
 
                     results = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'w')
                     #create figure to show query
@@ -438,7 +438,7 @@ class query_finder():
                     results.close()
                     return 1
                 except:
-                    errors = open('{0}/{1}/{2}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer),'w')
+                    errors = open('{0}/{1}/{2}/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
                     errors.write('Error finding detections for query class {} instance {}\n'.format(query_class, query_instance.replace('.png','').replace('.jpg','')))
                     print("No se encontraron puntos suficientes")
                     return 0
