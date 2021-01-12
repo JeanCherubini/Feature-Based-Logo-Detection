@@ -397,49 +397,50 @@ class query_finder():
                 t_procesamiento = time()-t_inicio
                 print('t_procesamiento', t_procesamiento)
 
-                #Get top porcentaje of sorted id images and their detections         
-                top_images_ids, top_images_detections = get_top_images(p_points,100,100)
+                try:
+                    #Get top porcentaje of sorted id images and their detections         
+                    top_images_ids, top_images_detections = get_top_images(p_points,100,100)
 
-                
-                #create folder for results
-                if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name):
-                    os.mkdir(params.feat_savedir +'/' + params.dataset_name)
-
-                if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + params.principal_components + '/detections'):
-                    os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections')
-
-                if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + params.principal_components + '/detections/'+query_class):
-                    os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections/'+query_class)
-
-                results = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'w')
-                #create figure to show query
                     
-                
-                
-                for id_ in top_images_ids:    
-                    
-                    #get detections for this image
-                    bounding_box, values = get_bounding_boxes([id_], top_images_detections, query)
-                
-                    for j in range(len(bounding_box[id_])):
-                        x1, y1, height, width = bounding_box[id_][j]
-                        value = values[id_][j]
-                        if not ([x1, y1, height, width]==[0 ,0 , 0 ,0]):
-                            results_text = '{0} {1} {2} {3} {4} {5:.3f} {6}\n'.format(id_, x1, y1, height, width, value,  query_class_num)
-                            results.write(results_text)
-                    '''    
-                    for bbox in bounding_box[id_]:
-                        x1, y1, height, width = bbox
-                        if not ([x1, y1, height, width]==[0 ,0 , 0 ,0]):
-                            results_text = '{0} {1} {2} {3} {4} {5}\n'.format(id_, x1, y1, height, width, query_class_num)
-                            results.write(results_text)
-                    '''
-                results.close()
-                return 1
+                    #create folder for results
+                    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name):
+                        os.mkdir(params.feat_savedir +'/' + params.dataset_name)
 
-                errors = open('{0}/{1}/{2}/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
-                errors.write('Error finding detections for query class {} instance {}\n'.format(query_class, query_instance.replace('.png','').replace('.jpg','')))
-                print("No se encontraron puntos suficientes")
-                return 0
+                    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections'):
+                        os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections')
+
+                    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections/'+query_class):
+                        os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections/'+query_class)
+
+                    results = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'w')
+                    #create figure to show query
+                        
+                    
+                    
+                    for id_ in top_images_ids:    
+                        
+                        #get detections for this image
+                        bounding_box, values = get_bounding_boxes([id_], top_images_detections, query)
+                    
+                        for j in range(len(bounding_box[id_])):
+                            x1, y1, height, width = bounding_box[id_][j]
+                            value = values[id_][j]
+                            if not ([x1, y1, height, width]==[0 ,0 , 0 ,0]):
+                                results_text = '{0} {1} {2} {3} {4} {5:.3f} {6}\n'.format(id_, x1, y1, height, width, value,  query_class_num)
+                                results.write(results_text)
+                        '''    
+                        for bbox in bounding_box[id_]:
+                            x1, y1, height, width = bbox
+                            if not ([x1, y1, height, width]==[0 ,0 , 0 ,0]):
+                                results_text = '{0} {1} {2} {3} {4} {5}\n'.format(id_, x1, y1, height, width, query_class_num)
+                                results.write(results_text)
+                        '''
+                    results.close()
+                    return 1
+                except:
+                    errors = open('{0}/{1}/{2}/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
+                    errors.write('Error finding detections for query class {} instance {}\n'.format(query_class, query_instance.replace('.png','').replace('.jpg','')))
+                    print("No se encontraron puntos suficientes")
+                    return 0
 
 
