@@ -284,7 +284,6 @@ class AP_calculator_class():
             
 
             #image load
-            print(train_images.num_images)
             image = train_images.load_image(id_)
             axs[n].imshow(image)
             axs[n].axis('off')
@@ -298,7 +297,9 @@ class AP_calculator_class():
             if not ([x1, y1, height, width]==[0 ,0 , 0 ,0]):
                 rect = Rectangle((x1,y1), width, height, edgecolor='b', facecolor="none")
                 axs[n].add_patch(rect)
-                axs[n].text(x1, y1+height, params.query_class, color='b')
+                axs[n].text(x1, y1+height, query_class, color='b')
+
+
             try:
                 #get ground truth for this image
                 annotations = train_images.image_info[id_]['annotations']

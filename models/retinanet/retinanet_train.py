@@ -189,7 +189,7 @@ model.fit(
 """
 
 # Change this to `model_dir` when not using the downloaded weights
-weights_dir = "model_dir"
+weights_dir = "/mnt/BE6CA2E26CA294A5/Datasets/COCO_2017/data"
 
 latest_checkpoint = tf.train.latest_checkpoint(weights_dir)
 model.load_weights(latest_checkpoint)

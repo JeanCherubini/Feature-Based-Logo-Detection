@@ -37,11 +37,9 @@ from tensorflow import keras
 
 import matplotlib.pyplot as plt
 import tensorflow_datasets as tfds
-from retinanet import *
+from . import retinanet
 
-def load_retinanet_inference():
-    model_dir = "retinanet/"
-    label_encoder = LabelEncoder()
+def load_retinanet_FPN_model():
 
     num_classes = 80
     batch_size = 1
@@ -50,10 +48,9 @@ def load_retinanet_inference():
     """
     ## Initializing and compiling model
     """
-    resnet50_backbone = get_backbone()
+    resnet50_backbone = retinanet.get_backbone()
 
-    model = RetinaNet(num_classes, resnet50_backbone)
-
+    model = retinanet.FPN_model(num_classes, resnet50_backbone)
 
 
     # Change this to `model_dir` when not using the downloaded weights
@@ -67,11 +64,10 @@ def load_retinanet_inference():
     """
 
     image = tf.keras.Input(shape=[None, None, 3], name="image")
-    predictions = model(image, training=False)
-    detections = DecodePredictions(confidence_threshold=0.5)(image, predictions)
-    inference_model = tf.keras.Model(inputs=image, outputs=detections)
-    return inference_model
+    features = model(image, training=False)
+    model = tf.keras.Model(inputs=image, outputs=features)
+    return model
 
 if __name__ == "__main__":
-    a = load_retinanet_inference()
-    print(a)
+    a = load_retinanet_FPN_model()
+    print(a.summary())

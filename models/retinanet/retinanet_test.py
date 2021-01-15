@@ -95,7 +95,7 @@ model = RetinaNet(num_classes, resnet50_backbone)
 """
 
 # Change this to `model_dir` when not using the downloaded weights
-weights_dir = "model_dir"
+weights_dir = "/mnt/BE6CA2E26CA294A5/Datasets/COCO_2017/data"
 
 latest_checkpoint = tf.train.latest_checkpoint(weights_dir)
 model.load_weights(latest_checkpoint)
@@ -140,3 +140,4 @@ for sample in val_dataset.take(2):
         class_names,
         detections.nmsed_scores[0][:num_detections],
     )
+    

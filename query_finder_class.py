@@ -86,7 +86,6 @@ def get_p_maximum_values(image_ids, heatmaps, query, p):
             
             y_del_begin = y_max - y_deletion_query
 
-
             '''
             #Show points rescued
             fig, axs = plt.subplots(1, 1, sharey=False, figsize=(25,15))
@@ -102,14 +101,14 @@ def get_p_maximum_values(image_ids, heatmaps, query, p):
 
             right_point = Rectangle((x_del_begin + width_query, y_del_begin + height_query), 2, 2, edgecolor='g', facecolor="r")
             axs.add_patch(right_point)
-            print('x_max',x_max, 'y_max',y_max,'bbox',x_del_begin, y_del_begin, height_query, width_query)
+            print('x_max',x_max, 'y_max',y_max,'bbox',x_del_begin, y_del_begin, height_query, width_query, 'value', maximum_value)
             plt.show()
-            '''
 
             current_hmap[y_del_begin:y_del_begin + height_query, x_del_begin:x_del_begin + width_query] = 0
  
             point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin, y_del_begin, height_query, width_query], 'value':maximum_value} 
             p_points.append(point)
+            '''
 
             
         return np.array(p_points)
@@ -167,9 +166,9 @@ def get_p_maximum_values_optimized(image_ids, heatmaps, query, p):
 
                     heatmaps_modifiable[dim, y_begin:y_end, x_begin:x_end, 0] = 0
                     
-                    if dim ==1:
-                        plt.imshow(heatmaps_modifiable[dim])
-                        plt.show()
+                    #if dim ==1:
+                        #plt.imshow(heatmaps_modifiable[dim])
+                        #plt.show()
 
                     point = {'image_id':image_ids[dim] ,'x_max':max_locations[dim][1].numpy(), 'y_max':max_locations[dim][2].numpy(), 'bbox':[x_begin, y_begin, width_query, height_query],  'value':max_values[dim].numpy()} 
                     p_points.append(point)
@@ -186,11 +185,12 @@ def get_top_images(p_points, global_top_percentage, in_image_top_porcentage):
     sorted_p_points = sorted(p_points, key = lambda i: i['value'], reverse=True)
     
     #Calculate maximum value obtained
-    max_value = sorted_p_points[0]['value']
-    limit_value = max_value-max_value*(global_top_percentage)/100
+    #max_value = sorted_p_points[0]['value']
+    #limit_value = max_value-max_value*(global_top_percentage)/100
     
     #Get top points keeping the global_top_percentage calculated from the maximum found in all images
     top_points = [p_point for p_point in sorted_p_points if p_point['value']>0]
+    print(top_points)
 
     #Group all points by the imaghe they belong to
     grouped_by_image = defaultdict(list)
@@ -239,7 +239,17 @@ class query_finder():
             if(os.path.isfile('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png','').replace('.jpg','')))):
                 print('Results for {} already exist!'.format(query_instance.replace('.png','').replace('.jpg','')))
                 return 0
+
+            elif not os.path.isfile('{0}/{1}/{2}/{3}/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)):
+                #Create file for times 
+                time_file = open('{0}/{1}/{2}/{3}/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
+                time_file.close()
+        
             else: 
+                #Open time file
+                time_file = open('{0}/{1}/{2}/{3}/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'a')
+
+
                 #creation of dataset like coco
                 train_images = CocoLikeDataset()
                 train_images.load_data(params.annotation_json, params.coco_images)
@@ -336,6 +346,7 @@ class query_finder():
 
                 t_inicio = time()
 
+
                 #Get maximum possible convolution value
                 max_possible_value = tf.nn.convolution(tf.expand_dims(tf.squeeze(final_query_features),axis=0), final_query_features, padding = 'VALID', strides=[1,1,1,1])
                 #Search query in batches of images
@@ -384,7 +395,7 @@ class query_finder():
                         else:
                             p_points = np.concatenate( (p_points, get_p_maximum_values(image_ids, heatmaps, query, params.p)) )
                         print('Time searching points: {}'.format(time()-t_points))
-                        
+                                              
 
                         print('Batch {0} processed in {1}'.format(batch_counter, time()-t_batch))
                     except:
@@ -395,6 +406,8 @@ class query_finder():
                     #    break
 
                 t_procesamiento = time()-t_inicio
+                time_file.write('{}\t{}\n'.format(query_instance, t_procesamiento))
+                time_file.close()
                 print('t_procesamiento', t_procesamiento)
 
                 try:

@@ -15,7 +15,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 from utils.COCO_Utils.COCO_like_dataset import CocoLikeDataset 
 
-from models.retinanet import retinanet
+from models.retinanet import retinanet, load_retinanet
 
 def make_chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
@@ -305,8 +305,7 @@ if __name__ == '__main__' :
 
     elif params.model=='retinanet':
         #base model
-        model = retinanet.FeaturePyramid()
-
+        model = load_retinanet.load_retinanet_FPN_model()
         
 
         #creation of dataset like coco
@@ -333,12 +332,12 @@ if __name__ == '__main__' :
         layers = ['P3', 'P4', 'P5', 'P6', 'P7']
 
 
-        pcas = []
+        pcas = {}
 
         #Entrenamiento de múltiples PCA
         for layer in range(len(layers)):
-            if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '/' + layers[layer]):
-                os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '/' + layers[layer])
+            if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' +  params.layer + '/' + str(params.principal_components) + '/' + layers[layer]):
+                os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/' + str(params.principal_components) + '/' + layers[layer])
             
             batches = make_chunks(ids, params.batch_size)
             
@@ -349,11 +348,15 @@ if __name__ == '__main__' :
             features_for_pca_training_generator = yield_batch_for_PCA_retinanet(batches, layer)
 
             for features_for_pca_training in list(features_for_pca_training_generator):
-                print('training PCA model with {} features'.format(features_for_pca_training.shape))
-                pca.partial_fit(features_for_pca_training)
+                try:
+                    print('training PCA model with {} features'.format(features_for_pca_training.shape))
+                    pca.partial_fit(features_for_pca_training)
+                except:
+                    print('Error while training PCA with this batch')
+                    continue
         
             print('variance:', pca.explained_variance_)
-            pcas.append(pca)
+            pcas[layer]=pca
             pk.dump(pca, open(pca_path + "/pca_{}_{}.pkl".format(params.principal_components,layers[layer]),"wb"))
             #Memory free
             features_for_pca_training = []
@@ -364,7 +367,6 @@ if __name__ == '__main__' :
 
         #Record errors in the batch_processing
         error_log = open(features_path + '/errors.txt', 'w')
-
 
         #Try to transform every batch with initial size
         #set condition for failure iun batch processing
@@ -378,7 +380,7 @@ if __name__ == '__main__' :
                     images = train_images.load_image_batch(batch, params.model)['padded_images']/255
                     annotations = train_images.load_annotations_batch(batch)
                     
-                    for layer in layers:
+                    for layer in range(len(layers)):
                         #features extracted
                         features_batch = model(images)[layer]
 
@@ -397,13 +399,12 @@ if __name__ == '__main__' :
                         #Go back to original shape
                         features_to_save = tf.reshape(pca_features, (b,height,width,params.principal_components))
 
-
-
-                        np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations})
+                        np.save(features_path + '/features_{}_{}'.format(batch_counter, layers[layer]), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations})
                         
+                    plt.show()
 
-                        print('batch:', batch_counter, features_to_save.shape)
-                        batch_counter+=1
+                    print('batch:', batch_counter, features_to_save.shape)
+                    batch_counter+=1
 
                 elif(failed):
                     failed_batches = np.concatenate((failed_batches,batch))

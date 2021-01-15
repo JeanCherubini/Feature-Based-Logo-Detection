@@ -96,7 +96,7 @@ model = FPN_model(num_classes, resnet50_backbone)
 """
 
 # Change this to `model_dir` when not using the downloaded weights
-weights_dir = "model_dir"
+weights_dir = "/mnt/BE6CA2E26CA294A5/Datasets/COCO_2017/data"
 
 latest_checkpoint = tf.train.latest_checkpoint(weights_dir)
 model.load_weights(latest_checkpoint)
@@ -134,8 +134,14 @@ int2str = dataset_info.features["objects"]["label"].int2str
 
 for sample in val_dataset.take(2):
     image = tf.cast(sample["image"], dtype=tf.float32)
+    plt.imshow(image[0])
+    plt.figure()
     input_image, ratio = prepare_image(image)
+    plt.imshow(input_image[0])
+    plt.figure()
     features = inference_model.predict(input_image)
+    plt.imshow(features[0][0,:,:,0])
+    plt.show()
     for i in features:
         print(i.shape)
  
