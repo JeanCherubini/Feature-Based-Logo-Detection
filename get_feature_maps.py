@@ -161,6 +161,7 @@ if __name__ == '__main__' :
             pk.dump(pca, open(pca_path + "/pca_{}.pkl".format(params.principal_components),"wb"))
             #Memory free
             features_for_pca_training = []
+            
 
         batches = make_chunks(ids, params.batch_size)
         batch_counter=0
@@ -192,15 +193,24 @@ if __name__ == '__main__' :
                     if(params.principal_components>=1):                   
                         #PCA
                         pca_features = pca.transform(features_reshaped_PCA)
+                        #l2_normalization        
+                        pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
+                                        epsilon=1e-12, name=None)
+
+                        
+                        #Go back to original shape
+                        features_to_save = tf.reshape(pca_features, (b,height,width,params.principal_components))
                     else:
                         pca_features = features_reshaped_PCA
+                        #l2_normalization        
+                        pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
+                                        epsilon=1e-12, name=None)
 
-                    #l2_normalization        
-                    pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
-                                    epsilon=1e-12, name=None)
+                        
+                        #Go back to original shape
+                        features_to_save = tf.reshape(pca_features, (b,height,width,channels))
 
-                    #Go back to original shape
-                    features_to_save = tf.reshape(pca_features, (b,height,width,params.principal_components))
+                    
 
 
 
@@ -241,15 +251,22 @@ if __name__ == '__main__' :
                         if(params.principal_components>=1):                          
                             #PCA
                             pca_features = pca.transform(features_reshaped_PCA)
+                                #l2_normalization        
+                            pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
+                                            epsilon=1e-12, name=None)
+
+                            #Go back to original shape
+                            features_to_save = tf.reshape(pca_features, (b,height, width,params.principal_components))
                         else:
                             pca_features = features_reshaped_PCA
+                            #l2_normalization        
+                            pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
+                                            epsilon=1e-12, name=None)
 
-                        #l2_normalization        
-                        pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
-                                        epsilon=1e-12, name=None)
+                            #Go back to original shape
+                            features_to_save = tf.reshape(pca_features, (b,height, width, channels))
 
-                        #Go back to original shape
-                        features_to_save = tf.reshape(pca_features, (b,height, width,params.principal_components))
+                        
 
                         np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations})
 
@@ -295,15 +312,23 @@ if __name__ == '__main__' :
                 if(params.principal_components>=1):                   
                     #PCA
                     pca_features = pca.transform(features_reshaped_PCA)
+                    #l2_normalization        
+                    pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
+                                    epsilon=1e-12, name=None)
+
+                    #Go back to original shape
+                    features_to_save = tf.reshape(pca_features, (b,height,width,params.principal_components))
                 else:
                     pca_features = features_reshaped_PCA
+                    
+                    #l2_normalization        
+                    pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
+                                    epsilon=1e-12, name=None)
 
-                #l2_normalization        
-                pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
-                                epsilon=1e-12, name=None)
+                    #Go back to original shape
+                    features_to_save = tf.reshape(pca_features, (b,height,width,channels))
 
-                #Go back to original shape
-                features_to_save = tf.reshape(pca_features, (b,height,width,params.principal_components))
+                
 
                 np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':[big_image], 'features':features_to_save, 'annotations':annotations})
 
