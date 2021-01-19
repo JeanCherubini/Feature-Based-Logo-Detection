@@ -77,11 +77,12 @@ def get_p_maximum_values(image_ids, heatmaps, query, p):
         current_hmap = np.array(heatmaps[hmap_index])
 
         for p_num in range(p):
-            
+            #Get maximum values
             y_max, x_max, _ = np.unravel_index(np.argmax(current_hmap), current_hmap.shape)
 
             maximum_value = np.max(current_hmap)
 
+            #Get coordinates for box deletion
             x_del_begin = x_max - x_deletion_query
             
             y_del_begin = y_max - y_deletion_query
@@ -103,82 +104,16 @@ def get_p_maximum_values(image_ids, heatmaps, query, p):
             axs.add_patch(right_point)
             print('x_max',x_max, 'y_max',y_max,'bbox',x_del_begin, y_del_begin, height_query, width_query, 'value', maximum_value)
             plt.show()
-
+            '''
+            #deletion of box
             current_hmap[y_del_begin:y_del_begin + height_query, x_del_begin:x_del_begin + width_query] = 0
  
             point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin, y_del_begin, height_query, width_query], 'value':maximum_value} 
             p_points.append(point)
-            '''
 
             
         return np.array(p_points)
 
-
-
-def get_p_maximum_values_optimized(image_ids, heatmaps, query, p):
-    t1 = time()
-    n, height, width, channels = heatmaps.shape
-    height_query, width_query, _= query.shape
-
-    #Range to delete from the borders, depends on query shape
-    x_deletion_query = math.floor(width_query/2)
-    y_deletion_query = math.floor(height_query/2)
-
-    #Copy of heatmaps that is actually modifiable
-    heatmaps_modifiable = np.array(heatmaps)
-
-    p_points = []
-
-    for p_num in range(p):
-        #Get maximum value for each image in the batch
-        reduced =  tf.math.reduce_max(heatmaps_modifiable, axis = (1,2), keepdims=True)
-
-        #if there is a zero-max
-        reduced = tf.where(tf.equal(reduced, 0), -1000*tf.ones_like(reduced), reduced)
-
-        #Get mask to find where are the maximum values
-        mask = tf.equal(reduced, heatmaps_modifiable)
-        
-        #Get indexes for the p_points
-        indexes = tf.where(mask)
-       
-        max_values = tf.squeeze(reduced)
-        max_locations = tf.squeeze(indexes)
-
-        for dim in range(len(max_locations)):
-            try:
-                if(max_values[dim].numpy()>0):
-                    y_begin = (max_locations[dim][1]-y_deletion_query).numpy()
-                    if y_begin<0:
-                        y_begin=0
-
-                    y_end = (max_locations[dim][1]+y_deletion_query).numpy()
-                    if y_end>=width:
-                        y_end=width
-
-                    x_begin = (max_locations[dim][2]-x_deletion_query).numpy()
-                    if x_begin<0:
-                        x_begin=0
-                    
-                    x_end = (max_locations[dim][2]+x_deletion_query).numpy()
-                    if x_end>=height:
-                        x_end=height
-
-                    heatmaps_modifiable[dim, y_begin:y_end, x_begin:x_end, 0] = 0
-                    
-                    #if dim ==1:
-                        #plt.imshow(heatmaps_modifiable[dim])
-                        #plt.show()
-
-                    point = {'image_id':image_ids[dim] ,'x_max':max_locations[dim][1].numpy(), 'y_max':max_locations[dim][2].numpy(), 'bbox':[x_begin, y_begin, width_query, height_query],  'value':max_values[dim].numpy()} 
-                    p_points.append(point)
-            except:
-                point = {'image_id':-1 ,'x_max':-1, 'y_max':-1, 'value':-1} 
-                p_points.append(point)    
-                print('No se encontro punto maximo')
-                continue
-    print('time in finding points: {:.3f}'.format(time()-t1))
-    return np.array(p_points)
     
 def get_top_images(p_points, global_top_percentage, in_image_top_porcentage):
     #Sort points by value
@@ -190,7 +125,6 @@ def get_top_images(p_points, global_top_percentage, in_image_top_porcentage):
     
     #Get top points keeping the global_top_percentage calculated from the maximum found in all images
     top_points = [p_point for p_point in sorted_p_points if p_point['value']>0]
-    print(top_points)
 
     #Group all points by the imaghe they belong to
     grouped_by_image = defaultdict(list)
