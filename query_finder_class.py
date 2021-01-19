@@ -299,7 +299,7 @@ class query_finder():
                 b, height, width, channels = features_query.shape
 
                 #features reshaped for PCA transformation
-                features_reshaped_PCA = tf.reshape(features_query, (b*height*width,channels))1
+                features_reshaped_PCA = tf.reshape(features_query, (b*height*width,channels))
                 
                 if(params.principal_components>=1):                
                     #PCA

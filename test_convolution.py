@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
-image = tf.constant(range(27), shape=(1,3,3,3), dtype=tf.float32)
+image = tf.constant(range(12), shape=(1,2,2,3), dtype=tf.float32)
 print(image.shape)
 print(image[:,:,:,0])
 
