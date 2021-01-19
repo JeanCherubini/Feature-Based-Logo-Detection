@@ -144,7 +144,7 @@ if __name__ == '__main__' :
         batches = make_chunks(ids, params.batch_size)
 
         #creacion de PCA
-        if(params.principal_components!=-1):
+        if(params.principal_components>=1):
             pca = IncrementalPCA(n_components=params.principal_components)
 
         
