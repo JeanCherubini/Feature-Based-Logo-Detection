@@ -288,20 +288,24 @@ class query_finder():
                 #intermediate_model
                 intermediate_model = get_layer_model(model, params.layer)
 
-                #PCA model
-                pca_dir = params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/' + str(params.principal_components) +'/PCA/'
-                pca = pk.load(open(pca_dir + "/pca_{}.pkl".format(params.principal_components),'rb'))
+                if(params.principal_components>=1):
+                    #PCA model
+                    pca_dir = params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/' + str(params.principal_components) +'/PCA/'
+                    pca = pk.load(open(pca_dir + "/pca_{}.pkl".format(params.principal_components),'rb'))
 
                 #Queryu procesing
                 features_query = intermediate_model(query, training=False)
 
                 b, height, width, channels = features_query.shape
-                
+
                 #features reshaped for PCA transformation
-                features_reshaped_PCA = tf.reshape(features_query, (b*height*width,channels))
+                features_reshaped_PCA = tf.reshape(features_query, (b*height*width,channels))1
                 
-                #PCA
-                pca_features = pca.transform(features_reshaped_PCA)
+                if(params.principal_components>=1):                
+                    #PCA
+                    pca_features = pca.transform(features_reshaped_PCA)
+                else:
+                    pca_features = features_reshaped_PCA
 
                 #l2_normalization        
                 pca_features = tf.math.l2_normalize(pca_features, axis=-1, 

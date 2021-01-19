@@ -144,22 +144,23 @@ if __name__ == '__main__' :
         batches = make_chunks(ids, params.batch_size)
 
         #creacion de PCA
-        pca = IncrementalPCA(n_components=params.principal_components)
+        if(params.principal_components!=-1):
+            pca = IncrementalPCA(n_components=params.principal_components)
 
         
-        features_for_pca_training_generator = yield_batch_for_PCA(batches)
+            features_for_pca_training_generator = yield_batch_for_PCA(batches)
 
-        for features_for_pca_training in list(features_for_pca_training_generator):
-            print('training PCA model with {} features'.format(features_for_pca_training.shape))
-            pca.partial_fit(features_for_pca_training)
+            for features_for_pca_training in list(features_for_pca_training_generator):
+                print('training PCA model with {} features'.format(features_for_pca_training.shape))
+                pca.partial_fit(features_for_pca_training)
 
 
 
         
-        print('variance:', pca.explained_variance_)
-        pk.dump(pca, open(pca_path + "/pca_{}.pkl".format(params.principal_components),"wb"))
-        #Memory free
-        features_for_pca_training = []
+            print('variance:', pca.explained_variance_)
+            pk.dump(pca, open(pca_path + "/pca_{}.pkl".format(params.principal_components),"wb"))
+            #Memory free
+            features_for_pca_training = []
 
         batches = make_chunks(ids, params.batch_size)
         batch_counter=0
@@ -184,12 +185,15 @@ if __name__ == '__main__' :
                     features_batch = intermediate_model(images, training=False)
 
                     b, height, width, channels = features_batch.shape
-                    
+
                     #features reshaped for PCA transformation
                     features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
-                    
-                    #PCA
-                    pca_features = pca.transform(features_reshaped_PCA)
+
+                    if(params.principal_components>=1):                   
+                        #PCA
+                        pca_features = pca.transform(features_reshaped_PCA)
+                    else:
+                        pca_features = features_reshaped_PCA
 
                     #l2_normalization        
                     pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
@@ -233,9 +237,12 @@ if __name__ == '__main__' :
                         
                         #features reshaped for PCA transformation
                         features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
-                        
-                        #PCA
-                        pca_features = pca.transform(features_reshaped_PCA)
+
+                        if(params.principal_components>=1):                          
+                            #PCA
+                            pca_features = pca.transform(features_reshaped_PCA)
+                        else:
+                            pca_features = features_reshaped_PCA
 
                         #l2_normalization        
                         pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
@@ -284,9 +291,12 @@ if __name__ == '__main__' :
                 
                 #features reshaped for PCA transformation
                 features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
-                
-                #PCA
-                pca_features = pca.transform(features_reshaped_PCA)
+
+                if(params.principal_components>=1):                   
+                    #PCA
+                    pca_features = pca.transform(features_reshaped_PCA)
+                else:
+                    pca_features = features_reshaped_PCA
 
                 #l2_normalization        
                 pca_features = tf.math.l2_normalize(pca_features, axis=-1, 

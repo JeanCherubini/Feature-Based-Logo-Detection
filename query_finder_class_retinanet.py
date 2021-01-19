@@ -354,7 +354,7 @@ class query_finder():
                         original_image_sizes = train_images.load_image_batch(image_ids, params.model)['original_sizes']
 
                         #shape of the batch with padding
-                        original_batches, original_height, original_width, original_channels = train_images.load_image_batch(image_ids, params.model)['padded_batch_size']
+                        original_batches, original_height, original_width, original_channels = /mnt/BE6CA2E26CA294A5/Resultados_Memoria_image_batch(image_ids, params.model)['padded_batch_size']
 
                         t_conv = time()
 

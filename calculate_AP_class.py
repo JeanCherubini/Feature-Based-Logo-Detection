@@ -268,6 +268,8 @@ class AP_calculator_class():
         
 
         for i,(value,id_) in enumerate(ordered_detections.keys()):
+            if i>=1000:
+                break
             print('value,id_', value, id_)
             n=i%10
             if n==0:
