@@ -167,6 +167,8 @@ def get_bounding_boxes(top_images_ids, top_images_detections, query):
 
 
 class query_finder():
+
+
     
     def search_query(self, params, query_class, query_instance):
         #check if result already exists
@@ -389,7 +391,10 @@ class query_finder():
                     results.close()
                     return 1
                 except:
-                    errors = open('{0}/{1}/{2}/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
+                    if not(os.path.isfile('{0}/{1}/{2}/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components))):
+                        errors = open('{0}/{1}/{2}/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
+                        errors.close()
+                    errors = open('{0}/{1}/{2}/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'a')
                     errors.write('Error finding detections for query class {} instance {}\n'.format(query_class, query_instance.replace('.png','').replace('.jpg','')))
                     print("No se encontraron puntos suficientes")
                     return 0

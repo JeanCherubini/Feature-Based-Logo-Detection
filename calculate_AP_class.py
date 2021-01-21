@@ -268,20 +268,26 @@ class AP_calculator_class():
         
 
         for i,(value,id_) in enumerate(ordered_detections.keys()):
-            if i>=1000:
+            if i>=10:
                 break
-            print('value,id_', value, id_)
+            print('i, value, id_', i, value, id_)
             n=i%10
             if n==0:
                 if i!=0:
-                    plt.savefig('{0}/{1}/{2}/{3}/results/{4}/{5}_top_{6}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance, str(i)))
+                    if not(os.path.isfile('{0}/{1}/{2}/{3}/results/{4}/{5}_top_{6}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance, str(i)))):
+                        plt.savefig('{0}/{1}/{2}/{3}/results/{4}/{5}_top_{6}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance, str(i)))
+                    else:
+                        print('Query {} results already exist! '.format(query_instance))
+                        break
+                    plt.close()
+
                     '''
                     plt.show(block=False)
                     plt.pause(3)            
 
                     plt.close()
                     '''
-                fig, ([ax0, ax1, ax2, ax3, ax4], [ax5, ax6, ax7, ax8, ax9]) = plt.subplots(2, 5, sharey=False, figsize=(25,15))
+                fig, ([ax0, ax1, ax2, ax3, ax4], [ax5, ax6, ax7, ax8, ax9]) = plt.subplots(2, 5, sharey=False, figsize=(50,30))
                 axs = ax0, ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8, ax9 
             
 
@@ -324,10 +330,15 @@ class AP_calculator_class():
                 continue
             
 
+        if not(os.path.isfile('{0}/{1}/{2}/{3}/results/{4}/{5}_top_{6}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance, 'last'))):
+            plt.savefig('{0}/{1}/{2}/{3}/results/{4}/{5}_top_{6}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance, 'last'))
+        else:
+            print('Query {} results already exist! '.format(query_instance))
         
-        plt.savefig('{0}/{1}/{2}/{3}/results/{4}/{5}_top_{6}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance, 'last'))
         '''
         plt.show(block=False)
         plt.pause(3)
-        plt.close()
         '''
+        plt.close()
+        
+        return 0
