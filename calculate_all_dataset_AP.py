@@ -40,6 +40,5 @@ if __name__ == '__main__' :
                 file_all_ap.write(query_instance.replace('.png', '').replace('.jpg','') + ' ' + AP + '\n')
             except:
                 print('Detections file for query class {0} instance {1} not found'.format(query_class, query_instance))
-            break
     
     file_all_ap.close()
