@@ -16,6 +16,7 @@ from sklearn.decomposition import PCA
 import pickle as pk
 from datetime import datetime
 
+from skimage import measure
 from skimage.io import imread
 
 from PIL import Image, ImageDraw 
@@ -172,9 +173,13 @@ class query_finder():
     
     def search_query(self, params, query_class, query_instance):
         #check if result already exists
+            '''¿
             if(os.path.isfile('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png','').replace('.jpg','')))):
                 print('Results for {} already exist!'.format(query_instance.replace('.png','').replace('.jpg','')))
                 return 0
+            '''
+            if False:
+                print()
 
             elif not os.path.isfile('{0}/{1}/{2}/{3}/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)):
                 #Create file for times 
@@ -193,6 +198,7 @@ class query_finder():
 
                 classes_dictionary = train_images.class_info
                 query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==query_class][0]
+                
 
 
                 #load desired query
@@ -291,55 +297,86 @@ class query_finder():
                 max_possible_value = tf.nn.convolution(tf.expand_dims(tf.squeeze(final_query_features),axis=0), final_query_features, padding = 'VALID', strides=[1,1,1,1])
                 #Search query in batches of images
                 for batch_counter in range(cant_of_batches):
-                    try:
-                        print('Processing Batch: {0} for query {1}'.format(batch_counter, query_instance))
-                        t_batch = time()
+                    #try:
+                    print('Processing Batch: {0} for query {1}'.format(batch_counter, query_instance))
+                    t_batch = time()
 
-                        #load batch of features and the ids of the images 
-                        data = np.load(image_feat_savedir + '/features_{}.npy'.format(batch_counter), allow_pickle=True)
-                        print('Time in loading data {}'.format(time()-t_batch))
-                        image_ids = data.item().get('image_ids')
-                        features = data.item().get('features')
-                        
-                        #list of original batch image sizes without padding
-                        original_image_sizes = train_images.load_image_batch(image_ids, params.model)['original_sizes']
+                    #load batch of features and the ids of the images 
+                    data = np.load(image_feat_savedir + '/features_{}.npy'.format(batch_counter), allow_pickle=True)
+                    print('Time in loading data {}'.format(time()-t_batch))
+                    image_ids = data.item().get('image_ids')
+                    features = data.item().get('features')
+                    annotations = data.item().get('annotations')
 
-                        #shape of the batch with padding
-                        original_batches, original_height, original_width, original_channels = train_images.load_image_batch(image_ids, params.model)['padded_batch_size']
 
-                        t_conv = time()
+                    #list of original batch image sizes without padding
+                    original_image_sizes = train_images.load_image_batch(image_ids, params.model)['original_sizes']
 
-                        #Convolution of features of the batch and the query
-                        features = tf.convert_to_tensor(features)
-                        features = tf.dtypes.cast(features, tf.float32)
+                    #shape of the batch with padding
+                    original_batches, original_height, original_width, original_channels = train_images.load_image_batch(image_ids, params.model)['padded_batch_size']
 
-                        print('features shape:{0} \nquery_shape: {1}'.format(features.shape, final_query_features.shape))
+                    t_conv = time()
 
-                        #convolution between feature batch of images and features of the query 
-                        heatmaps = tf.nn.convolution(features, final_query_features, padding = 'SAME', strides=[1,1,1,1])
+                    #Convolution of features of the batch and the query
+                    features = tf.convert_to_tensor(features)
+                    features = tf.dtypes.cast(features, tf.float32)
 
-                        #Normalization by max possible value
-                        heatmaps = heatmaps/max_possible_value
-                        print('time on convolutions: {:.3f}'.format(time()-t_conv))
+                    print('features shape:{0} \nquery_shape: {1}'.format(features.shape, final_query_features.shape))
 
-                        #interpolation to original image shapes
-                        heatmaps = tf.image.resize(heatmaps, (original_height, original_width), method=tf.image.ResizeMethod.BICUBIC)
+                    #convolution between feature batch of images and features of the query 
+                    heatmaps = tf.nn.convolution(features, final_query_features, padding = 'SAME', strides=[1,1,1,1])
 
-                        #Deletion of heatmap borders, for treating border abnormalities due to padding in the images
-                        heatmaps = delete_border_values(heatmaps, original_image_sizes, query)
+                    '''
+                    for i in range(heatmaps.shape[0]):
+                        annotations_image = annotations[i]
+                        print(annotations_image)
+                        annotation_labels = annotations_image[:,-1]
+                        print(annotation_labels)
+                        if query_class_num in annotation_labels:
+                            contours = measure.find_contours(np.asarray(tf.squeeze(heatmaps[i])), 0.8)
+                            # Display the image and plot all contours found
+                            fig, (ax,ax2) = plt.subplots(2,1)
+                            ax.imshow(np.asarray(tf.squeeze(heatmaps[i])),cmap='Greys_r')
+                            img_load = train_images.load_image_batch(image_ids, params.model)['padded_images']
+                            img_correct = img_load[i]/255
+                            ax2.imshow(img_correct)
 
-                        t_points=time()
-                        #create db with all the maximum points found 
-                        if(batch_counter == 0):
-                            p_points = get_p_maximum_values(image_ids, heatmaps, query, params.p)
-                        else:
-                            p_points = np.concatenate( (p_points, get_p_maximum_values(image_ids, heatmaps, query, params.p)) )
-                        print('Time searching points: {}'.format(time()-t_points))
-                                              
+                            for contour in contours:
+                                ax.plot(contour[:, 1], contour[:, 0], linewidth=2)
 
-                        print('Batch {0} processed in {1}'.format(batch_counter, time()-t_batch))
-                    except:
-                        print('Batch {} missing'.format(batch_counter))
+                            ax.axis('image')
+                            ax.set_xticks([])
+                            ax.set_yticks([])
+                            plt.show()
+                    '''
+
+                    #Normalization by max possible value
+                    heatmaps = heatmaps/max_possible_value
+                    print('time on convolutions: {:.3f}'.format(time()-t_conv))
+
+                    #interpolation to original image shapes
+                    heatmaps = tf.image.resize(heatmaps, (original_height, original_width), method=tf.image.ResizeMethod.BICUBIC)
+
+                    
+
+                    #Deletion of heatmap borders, for treating border abnormalities due to padding in the images
+                    heatmaps = delete_border_values(heatmaps, original_image_sizes, query)
+
+                    
+
+
+                    t_points=time()
+                    #create db with all the maximum points found 
+                    if(batch_counter == 0):
+                        p_points = get_p_maximum_values(image_ids, heatmaps, query, params.p)
+                    else:
+                        p_points = np.concatenate( (p_points, get_p_maximum_values(image_ids, heatmaps, query, params.p)) )
+                    print('Time searching points: {}'.format(time()-t_points))
+                                            
+
+                    print('Batch {0} processed in {1}'.format(batch_counter, time()-t_batch))
+                    #except:
+                    print('Batch {} missing'.format(batch_counter))
                     
                     
                     #if batch_counter==3:

@@ -75,7 +75,7 @@ if __name__ == '__main__' :
                 ir_for_DocExplore.write('{0}:{1}\n'.format(query_instance.replace('.jpg', '').replace('.png',''), recoveries_by_query_id[query_instance.replace('.jpg', '').replace('.png','')]))
 
             except:
-                ps_for_DocExplore.write('{0}:0-0-0-0-0\n'.format(query_instance.replace('.jpg', '').replace('.png','')))
+                ps_for_DocExplore.write('{0}:0-0-1-0-1\n'.format(query_instance.replace('.jpg', '').replace('.png','')))
                 ir_for_DocExplore.write('{0}:\n'.format(query_instance.replace('.jpg', '').replace('.png','')))
 
 
