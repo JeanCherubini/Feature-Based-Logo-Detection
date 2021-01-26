@@ -307,6 +307,7 @@ class query_finder():
                     image_ids = data.item().get('image_ids')
                     features = data.item().get('features')
                     annotations = data.item().get('annotations')
+                    print(annotations)
 
 
                     #list of original batch image sizes without padding
@@ -326,7 +327,6 @@ class query_finder():
                     #convolution between feature batch of images and features of the query 
                     heatmaps = tf.nn.convolution(features, final_query_features, padding = 'SAME', strides=[1,1,1,1])
 
-                    '''
                     for i in range(heatmaps.shape[0]):
                         annotations_image = annotations[i]
                         print(annotations_image)
@@ -348,7 +348,6 @@ class query_finder():
                             ax.set_xticks([])
                             ax.set_yticks([])
                             plt.show()
-                    '''
 
                     #Normalization by max possible value
                     heatmaps = heatmaps/max_possible_value

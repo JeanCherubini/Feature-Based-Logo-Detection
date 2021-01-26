@@ -181,6 +181,7 @@ if __name__ == '__main__' :
                     #original image
                     images = train_images.load_image_batch(batch, params.model)['padded_images']/255
                     annotations = train_images.load_annotations_batch(batch)
+                    print(annotations)
                         
                     #features extracted
                     features_batch = intermediate_model(images, training=False)
