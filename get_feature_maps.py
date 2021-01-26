@@ -175,56 +175,56 @@ if __name__ == '__main__' :
         failed_batches=[]
         failed=False
         for batch in list(batches):
-            #try:
-            if not failed:
-                print('batch', batch)
-                #original image
-                images = train_images.load_image_batch(batch, params.model)['padded_images']/255
-                annotations = train_images.load_annotations_batch(batch)
+            try:
+                if not failed:
+                    print('batch', batch)
+                    #original image
+                    images = train_images.load_image_batch(batch, params.model)['padded_images']/255
+                    annotations = train_images.load_annotations_batch(batch)
+                        
+                    #features extracted
+                    features_batch = intermediate_model(images, training=False)
+
+                    b, height, width, channels = features_batch.shape
+
+                    #features reshaped for PCA transformation
+                    features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
+
+                    if(params.principal_components>=1):                   
+                        #PCA
+                        pca_features = pca.transform(features_reshaped_PCA)
+                        #l2_normalization        
+                        pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
+                                        epsilon=1e-12, name=None)
+
+                        
+                        #Go back to original shape
+                        features_to_save = tf.reshape(pca_features, (b,height,width,params.principal_components))
+                    else:
+                        pca_features = features_reshaped_PCA
+                        #l2_normalization        
+                        pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
+                                        epsilon=1e-12, name=None)
+
+                        
+                        #Go back to original shape
+                        features_to_save = tf.reshape(pca_features, (b,height,width,channels))
+
                     
-                #features extracted
-                features_batch = intermediate_model(images, training=False)
 
-                b, height, width, channels = features_batch.shape
 
-                #features reshaped for PCA transformation
-                features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
 
-                if(params.principal_components>=1):                   
-                    #PCA
-                    pca_features = pca.transform(features_reshaped_PCA)
-                    #l2_normalization        
-                    pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
-                                    epsilon=1e-12, name=None)
-
+                    np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations})
                     
-                    #Go back to original shape
-                    features_to_save = tf.reshape(pca_features, (b,height,width,params.principal_components))
-                else:
-                    pca_features = features_reshaped_PCA
-                    #l2_normalization        
-                    pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
-                                    epsilon=1e-12, name=None)
 
-                    
-                    #Go back to original shape
-                    features_to_save = tf.reshape(pca_features, (b,height,width,channels))
-
-                
-
-
-
-                np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations})
-                
-
-                print('batch:', batch_counter, features_to_save.shape)
-                batch_counter+=1
-            elif(failed):
-                failed_batches = np.concatenate((failed_batches,batch))
-            #except:
-            failed_batches = batch
-            failed=True
-            continue
+                    print('batch:', batch_counter, features_to_save.shape)
+                    batch_counter+=1
+                elif(failed):
+                    failed_batches = np.concatenate((failed_batches,batch))
+            except:
+                failed_batches = batch
+                failed=True
+                continue
 
         #If fails, try extracting the images that are too big and push them to the end of the cicle.
         big_images = []
