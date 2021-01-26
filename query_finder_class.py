@@ -112,7 +112,6 @@ def get_p_maximum_values(image_ids, heatmaps, query, p):
             point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin, y_del_begin, height_query, width_query], 'value':maximum_value} 
             p_points.append(point)
     
-    print(p_points)
     return np.array(p_points)
 
     
