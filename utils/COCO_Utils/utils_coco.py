@@ -381,6 +381,8 @@ class Dataset(object):
             x1, y1, height, width = annot['bbox']
             label = annot['category_id']
             annotations_list.append([x1, y1, height, width, label])
+        if not annotations_list:
+            annotations_list.append([0,0,0,0,0])
         return np.array(annotations_list)
 
     def next_power_of_2(self,x):  
