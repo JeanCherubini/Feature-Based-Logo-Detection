@@ -38,7 +38,10 @@ def bb_intersection_over_union(boxA, boxB):
 	# return the intersection over union value
 	return iou
 
-def calculate_precision_recall(detections, all_annotations_this_class, th_IoU):
+def calculate_precision_recall(detections_file, all_annotations_this_class, th_IoU):
+
+
+
     true_positives = 0
     false_positives = 0
     false_negatives = 0
@@ -55,11 +58,13 @@ def calculate_precision_recall(detections, all_annotations_this_class, th_IoU):
 
     already_found = []
     #check if the detections made are true positives or false positives according to the iou threshhold
-    for value, img_id in detections.keys():
+    for line in detections_file.readline():
+        img_id = line.split(' ')[0]
+        bbox_detection = [line.split(' ')[1:5]]
+        value = line.split('5')
         #image of the detection exists in the ground truth
         if(img_id in all_annotations_this_class.keys()):
             #if the detection exists in the image, check IoU over all of the annotations in the image
-            bbox_detection = detections[value, img_id]
             for annot in all_annotations_this_class[img_id]:
                 IoU = bb_intersection_over_union(bbox_detection, annot)
                 #If detection is sufficient we add a true detection and discount a false negative detection, if this annotations wasnt already found
@@ -154,6 +159,7 @@ def calculate_interpolated_AP(recalls, precision, delta):
     return AP
 
 class AP_calculator_class():
+
     def get_ordered_detections(self, params, query_class, query_instance):
         #creation of dataset like coco
         train_images = CocoLikeDataset()
@@ -163,9 +169,28 @@ class AP_calculator_class():
         classes_dictionary = train_images.class_info
         query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==query_class][0]
 
-        #load desired query results
-        query_results = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class,query_instance.replace('.png','').replace('.jpg','')), 'r')
 
+        #load desired query results
+        query_results = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')), 'r')
+
+        #create ordered detections folder
+        if not os.path.isdir('{0}/{1}/{2}/{3}/detections_ordered'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)):
+            os.mkdir('{0}/{1}/{2}/{3}/detections_ordered'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components))
+
+        #create ordered detections class folder
+        if not os.path.isdir('{0}/{1}/{2}/{3}/detections_ordered/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class)):
+            os.mkdir('{0}/{1}/{2}/{3}/detections_ordered/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class))
+        
+        #create ordered_results file
+        query_results_ordered = open('{0}/{1}/{2}/{3}/detections_ordered/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')), 'w')
+
+        for line in sorted(query_results, key=lambda line: line.split()[-2], reverse=True):
+            query_results_ordered.write(line)
+        
+        query_results_ordered.close()
+
+
+        '''
         #get all detections for each image
         detections = {}
         detection_values = {}
@@ -176,14 +201,21 @@ class AP_calculator_class():
             bbox = [int(coord) for coord in bbox]
             value = float(row.split(' ')[-2])
             if value>=params.th_value:
+                if((value, id_) in detections.keys()):
+                    print('repetition')
+                    print((value, id_))
+                else:
+                    print('non_repetition')
                 detections[value, id_]=bbox
-        
+
 
         ordered_detections = collections.OrderedDict(sorted(detections.items(), reverse=True))
-        return ordered_detections
+        '''
+       
+        return 0
 
 
-    def calculate_query(self, params, query_class, query_instance, ordered_detections):
+    def calculate_query(self, params, query_class, query_instance):
         #creation of dataset like coco
         train_images = CocoLikeDataset()
         train_images.load_data(params.annotation_json, params.coco_images)
@@ -192,9 +224,7 @@ class AP_calculator_class():
         classes_dictionary = train_images.class_info
         query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==query_class][0]
 
-        #load desired query results
-        query_results = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,query_class,query_instance.replace('.png','').replace('.jpg','')), 'r')
-
+        
 
 
         #get all ground truth annotations for the class of the query
@@ -230,8 +260,10 @@ class AP_calculator_class():
         file_AP = open('{0}/{1}/{2}/{3}/AP/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer,params.principal_components , query_class, query_instance.replace('.png', '').replace('.jpg','')), 'w')
 
         for iou in multiple_ious:
+            #load desired query results file
+            query_results_ordered = open('{0}/{1}/{2}/{3}/detections_ordered/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,query_class,query_instance.replace('.png','').replace('.jpg','')), 'r')
             #calculate precision recall
-            recalls, precisions = calculate_precision_recall(ordered_detections, all_annotations_this_class, iou)
+            recalls, precisions = calculate_precision_recall(query_results_ordered, all_annotations_this_class, iou)
             calculated_interpolated_AP = calculate_interpolated_AP(recalls, precisions,0.01)
             file_AP.write('{0}:{1:2.2f} '.format(iou, calculated_interpolated_AP) )
             APS[iou] = calculated_interpolated_AP
@@ -241,7 +273,7 @@ class AP_calculator_class():
         file_AP.close()
         return 0
 
-    def plt_top_detections(self, params, query_class, query_instance, ordered_detections):
+    def plt_top_detections(self, params, query_class, query_instance):
 
         #creation of dataset like coco
         train_images = CocoLikeDataset()
@@ -251,8 +283,10 @@ class AP_calculator_class():
         classes_dictionary = train_images.class_info
         query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==query_class][0]
 
+
+
         #load desired query results
-        query_results = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class,query_instance.replace('.png','').replace('.jpg','')), 'r')
+        query_results_ordered = open('{0}/{1}/{2}/{3}/detections_ordered/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png','').replace('.jpg','')), 'r')
 
         #create figure to show query
         #plt.figure()
@@ -266,16 +300,24 @@ class AP_calculator_class():
         if not os.path.isdir('{0}/{1}/{2}//{3}/results/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class)):
             os.mkdir('{0}/{1}/{2}/{3}/results/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class))
         
-
-        for i,(value,id_) in enumerate(ordered_detections.keys()):
-            if i>=10:
+        counter=0
+        for line in query_results_ordered.readlines():
+            
+            if counter>=10 or os.path.isfile('{0}/{1}/{2}/{3}/results/{4}/{5}_top_{6}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance, 'last')):
                 break
-            print('i, value, id_', i, value, id_)
-            n=i%10
+            
+            print('line',line)
+
+            id_ = int(line.split(' ')[0])
+            bbox = [int(x) for x in line.split(' ')[1:5]]
+            value = float(line.split(' ')[5])
+
+            print('counter, value, id_', counter, value, id_, bbox)
+            n=counter%10
             if n==0:
-                if i!=0:
-                    if not(os.path.isfile('{0}/{1}/{2}/{3}/results/{4}/{5}_top_{6}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance, str(i)))):
-                        plt.savefig('{0}/{1}/{2}/{3}/results/{4}/{5}_top_{6}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance, str(i)))
+                if counter!=0:
+                    if not(os.path.isfile('{0}/{1}/{2}/{3}/results/{4}/{5}_top_{6}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance, str(counter)))):
+                        plt.savefig('{0}/{1}/{2}/{3}/results/{4}/{5}_top_{6}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance, str(counter)))
                     else:
                         print('Query {} results already exist! '.format(query_instance))
                         break
@@ -298,14 +340,13 @@ class AP_calculator_class():
             
 
             #get detections for this image
-
-            bbox = ordered_detections[value,id_]
-
             x1, y1, height, width = bbox
             if not ([x1, y1, height, width]==[0 ,0 , 0 ,0]):
                 rect = Rectangle((x1,y1), width, height, edgecolor='b', facecolor="none")
                 axs[n].add_patch(rect)
                 axs[n].text(x1, y1+height, query_class, color='b')
+            counter+=1
+
 
 
             try:
@@ -324,7 +365,6 @@ class AP_calculator_class():
                             rect = Rectangle((x1,y1), width, height, edgecolor='r', facecolor="none")
                             axs[n].add_patch(rect)
                             axs[n].text(x1, y1, label, color='r')
-
             except:
                 print('Annotation not found')
                 continue

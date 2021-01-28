@@ -32,12 +32,15 @@ if __name__ == '__main__' :
     parser.add_argument('-query_instance', help = 'filename of the query', type=str, default = 'random')
     parser.add_argument('-feat_savedir', help='directory of features database', type=str, default='/home/jeancherubini/Documents/feature_maps')
     parser.add_argument('-principal_components', help='amount of components kept (depth of feature vectors)', type=str, default='64')   
-    parser.add_argument('-th_value', help='threshhold value to keep image', type=float, default=0.5)
+    parser.add_argument('-th_value', help='threshhold value to keep image', type=float, default=0.1)
 
     params = parser.parse_args()    
 
     AP_calculator = AP_calculator_class()
+
+   
+    #create ordered detections file
+    AP_calculator.get_ordered_detections(params, params.query_class, params.query_instance)
     
-    ordered_detections = AP_calculator.get_ordered_detections(params, params.query_class, params.query_instance)
-    AP_calculator.plt_top_detections(params, params.query_class, params.query_instance, ordered_detections)
-    #AP_calculator.calculate_query(params, params.query_class, params.query_instance, ordered_detections)
+    AP_calculator.plt_top_detections(params, params.query_class, params.query_instance)
+    AP_calculator.calculate_query(params, params.query_class, params.query_instance)

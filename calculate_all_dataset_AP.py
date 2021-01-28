@@ -18,23 +18,25 @@ if __name__ == '__main__' :
 
     params = parser.parse_args()    
 
-    if not os.path.isdir('{0}/{1}/{2}/AP'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer)):
-        os.mkdir('{0}/{1}/{2}/AP'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer))
+    if not os.path.isdir('{0}/{1}/{2}/{3}/AP'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)):
+        os.mkdir('{0}/{1}/{2}/{3}/AP'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components))
 
-    file_all_ap = open('{0}/{1}/{2}/AP/all_AP.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer), 'w')
+    file_all_ap = open('{0}/{1}/{2}/{3}/AP/all_AP.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components), 'w')
 
     query_classes = os.listdir(params.query_path)
 
     AP_calculator = AP_calculator_class()
+    
 
     for query_class in query_classes:
         instances = os.listdir('{0}/{1}'.format(params.query_path, query_class))
         for query_instance in instances:
             try:
-                ordered_detections = AP_calculator.get_ordered_detections(params, query_class, query_instance)
-                AP_calculator.plt_top_detections(params, query_class, query_instance, ordered_detections)
-                AP_calculator.calculate_query(params, query_class, query_instance, ordered_detections)
-                file_ap = open('{0}/{1}/{2}/AP/{3}/{4}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, query_class, query_instance.replace('.png', '').replace('.jpg','')), 'r')    
+                #get detections file ordered
+                AP_calculator.get_ordered_detections(params, query_class, query_instance)
+                AP_calculator.plt_top_detections(params, query_class, query_instance)
+                AP_calculator.calculate_query(params, query_class, query_instance)
+                file_ap = open('{0}/{1}/{2}/{3}/AP/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png', '').replace('.jpg','')), 'r')    
                 AP = file_ap.readline()
                 file_ap.close()
                 file_all_ap.write(query_instance.replace('.png', '').replace('.jpg','') + ' ' + AP + '\n')
