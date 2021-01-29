@@ -55,17 +55,19 @@ def calculate_precision_recall(detections_file, all_annotations_this_class, th_I
         for annot in all_annotations_this_class[img_id]:
             false_negatives += 1
 
-
     already_found = []
     #check if the detections made are true positives or false positives according to the iou threshhold
-    for line in detections_file.readline():
-        img_id = line.split(' ')[0]
-        bbox_detection = [line.split(' ')[1:5]]
+    for line in detections_file.readlines():
+        img_id = int(line.split(' ')[0])
+        x1, y1, height, width = [int(coord) for coord in line.split(' ')[1:5]]
+        bbox_detection = [x1, y1, width, height]
         value = line.split('5')
+
         #image of the detection exists in the ground truth
         if(img_id in all_annotations_this_class.keys()):
             #if the detection exists in the image, check IoU over all of the annotations in the image
             for annot in all_annotations_this_class[img_id]:
+                
                 IoU = bb_intersection_over_union(bbox_detection, annot)
                 #If detection is sufficient we add a true detection and discount a false negative detection, if this annotations wasnt already found
                 if IoU>=th_IoU:
@@ -73,16 +75,12 @@ def calculate_precision_recall(detections_file, all_annotations_this_class, th_I
                     if (str(img_id)+':'+str(annot) not in already_found):
                         true_positives+=1
                         false_negatives-=1
+                        
                         #save detection for non repetition
                         already_found.append(str(img_id)+':'+str(annot))
+                    #If detection has already been found, this is a double detection
                     else:
                         false_positives+=1
-
-
-
-                #If detection is not enough
-                else:
-                    false_positives+=1
         #image of the detection is not in the ground truth, thus it does not contain the query at all
         else:
             false_positives+=1
@@ -91,8 +89,8 @@ def calculate_precision_recall(detections_file, all_annotations_this_class, th_I
             precisions.append(true_positives/(true_positives+false_positives))
             recalls.append(true_positives/(true_positives+false_negatives))
         except:
-            return
-
+            return np.array([0]), np.array([0])
+    
     
     #smoothing of precisions
     precisions_smoothed = precisions
@@ -107,9 +105,9 @@ def calculate_precision_recall(detections_file, all_annotations_this_class, th_I
         precisions.append(1e-15)
         recalls.append(recalls[-1]+1e-15)
 
-    plt.plot(recalls, precisions_smoothed, '-gp')
-    plt.xlim(0,1)
-    plt.ylim(0,1)
+    #plt.plot(recalls, precisions_smoothed, '-gp')
+    #plt.xlim(0,1)
+    #plt.ylim(0,1)
     return np.array(recalls), np.array(precisions_smoothed)
 
 def calculate_interpolated_AP(recalls, precision, delta):
@@ -144,7 +142,7 @@ def calculate_interpolated_AP(recalls, precision, delta):
             maximums_in_range.append(0)
 
 
-    AP = 100*np.sum(np.array(maximums_in_range))/len(maximums_in_range)
+    AP = np.sum(np.array(maximums_in_range))/len(maximums_in_range)
     plt.plot(np.arange(0,1,delta), maximums_in_range, '*r')
     plt.plot(np.arange(0,1,delta), np.zeros_like(np.arange(0,1,delta)), 'ob')
     
@@ -154,8 +152,8 @@ def calculate_interpolated_AP(recalls, precision, delta):
     display=0
     if display:
         plt.show(block=False)
-        plt.pause(2)
-        plt.close()
+        #plt.pause(2)
+        #plt.close()
     return AP
 
 class AP_calculator_class():
@@ -264,7 +262,7 @@ class AP_calculator_class():
             query_results_ordered = open('{0}/{1}/{2}/{3}/detections_ordered/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,query_class,query_instance.replace('.png','').replace('.jpg','')), 'r')
             #calculate precision recall
             recalls, precisions = calculate_precision_recall(query_results_ordered, all_annotations_this_class, iou)
-            calculated_interpolated_AP = calculate_interpolated_AP(recalls, precisions,0.01)
+            calculated_interpolated_AP = calculate_interpolated_AP(recalls, precisions,0.1)
             file_AP.write('{0}:{1:2.2f} '.format(iou, calculated_interpolated_AP) )
             APS[iou] = calculated_interpolated_AP
         print(query_instance, APS)
@@ -283,7 +281,10 @@ class AP_calculator_class():
         classes_dictionary = train_images.class_info
         query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==query_class][0]
 
-
+        #If the AP file already exists, skip it
+        if(os.path.isfile('{0}/{1}/{2}/{3}/AP/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer,params.principal_components , query_class, query_instance.replace('.png', '').replace('.jpg','')))):
+            print('AP already calculated for instance {0} from class {1}'.format(query_instance, query_class))
+            return
 
         #load desired query results
         query_results_ordered = open('{0}/{1}/{2}/{3}/detections_ordered/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png','').replace('.jpg','')), 'r')
@@ -306,13 +307,11 @@ class AP_calculator_class():
             if counter>=10 or os.path.isfile('{0}/{1}/{2}/{3}/results/{4}/{5}_top_{6}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance, 'last')):
                 break
             
-            print('line',line)
-
             id_ = int(line.split(' ')[0])
             bbox = [int(x) for x in line.split(' ')[1:5]]
             value = float(line.split(' ')[5])
 
-            print('counter, value, id_', counter, value, id_, bbox)
+            print('counter:{0}, value:{1}, id_:{2}, bbox:{3}'.format(counter, value, id_, bbox))
             n=counter%10
             if n==0:
                 if counter!=0:

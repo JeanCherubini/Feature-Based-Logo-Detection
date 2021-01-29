@@ -39,7 +39,7 @@ if __name__ == '__main__' :
                 file_ap = open('{0}/{1}/{2}/{3}/AP/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png', '').replace('.jpg','')), 'r')    
                 AP = file_ap.readline()
                 file_ap.close()
-                file_all_ap.write(query_instance.replace('.png', '').replace('.jpg','') + ' ' + AP + '\n')
+                file_all_ap.write('{0} {1}'.format(query_instance.replace('.png', '').replace('.jpg',''),AP))
             except:
                 print('Detections file for query class {0} instance {1} not found'.format(query_class, query_instance))
     
