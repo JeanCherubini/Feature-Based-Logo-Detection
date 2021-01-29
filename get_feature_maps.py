@@ -145,7 +145,7 @@ if __name__ == '__main__' :
 
         #creacion de PCA
         if(params.principal_components>=1):
-            pca = IncrementalPCA(n_components=params.principal_components, copy=False, batch_size = 10)
+            pca = IncrementalPCA(n_components=params.principal_components, copy=False, batch_size = 16)
 
         
             features_for_pca_training_generator = yield_batch_for_PCA(batches)
