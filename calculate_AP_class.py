@@ -222,7 +222,11 @@ class AP_calculator_class():
         classes_dictionary = train_images.class_info
         query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==query_class][0]
 
-        
+        #If the AP file already exists, skip it
+        if(os.path.isfile('{0}/{1}/{2}/{3}/AP/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer,params.principal_components , query_class, query_instance.replace('.png', '').replace('.jpg','')))):
+            print('AP already calculated for instance {0} from class {1}'.format(query_instance, query_class))
+            return
+
 
 
         #get all ground truth annotations for the class of the query
@@ -281,11 +285,7 @@ class AP_calculator_class():
         classes_dictionary = train_images.class_info
         query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==query_class][0]
 
-        #If the AP file already exists, skip it
-        if(os.path.isfile('{0}/{1}/{2}/{3}/AP/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer,params.principal_components , query_class, query_instance.replace('.png', '').replace('.jpg','')))):
-            print('AP already calculated for instance {0} from class {1}'.format(query_instance, query_class))
-            return
-
+        
         #load desired query results
         query_results_ordered = open('{0}/{1}/{2}/{3}/detections_ordered/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png','').replace('.jpg','')), 'r')
 
