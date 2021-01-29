@@ -302,7 +302,7 @@ class query_finder():
 
                         #load batch of features and the ids of the images 
                         data = np.load(image_feat_savedir + '/features_{}.npy'.format(batch_counter), allow_pickle=True)
-                        print('Time in loading data {}'.format(time()-t_batch))
+                        #print('Time in loading data {}'.format(time()-t_batch))
                         image_ids = data.item().get('image_ids')
                         features = data.item().get('features')
                         annotations = data.item().get('annotations')
@@ -329,7 +329,7 @@ class query_finder():
 
                         #Normalization by max possible value
                         heatmaps = heatmaps/max_possible_value
-                        print('time on convolutions: {:.3f}'.format(time()-t_conv))
+                        #print('time on convolutions: {:.3f}'.format(time()-t_conv))
 
     
                         #interpolation to original image shapes
@@ -376,7 +376,7 @@ class query_finder():
                             p_points = get_p_maximum_values(image_ids, heatmaps, query, params.p)
                         else:
                             p_points = np.concatenate( (p_points, get_p_maximum_values(image_ids, heatmaps, query, params.p)) )
-                        print('Time searching points: {}'.format(time()-t_points))
+                        #print('Time searching points: {}'.format(time()-t_points))
                                                 
 
                         print('Batch {0} processed in {1}'.format(batch_counter, time()-t_batch))
