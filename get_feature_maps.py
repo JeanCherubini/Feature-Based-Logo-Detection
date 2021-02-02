@@ -76,7 +76,7 @@ def yield_batch_for_PCA_retinanet(batches, layer):
 
         
 def split_image(image):
-    n, height, width, channels = image.shape()
+    n, height, width, channels = image.shape
 
     half_point = int(width/2)
 
