@@ -1,0 +1,7 @@
+{
+    "dataset_name":"DocExplore",
+    "coco_images":"/home/vision/smb-datasets/DocExplore_COCO/images" ,
+    "annotation_json": "/home/vision/smb-datasets/DocExplore_COCO/annotations/instances.json",
+    "feat_savedir":"/home/jcherubini/feats_dir",
+    "query_path":"/home/vision/smb-datasets/DocExplore_COCO/images/queries" 
+}

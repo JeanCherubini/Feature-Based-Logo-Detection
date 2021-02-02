@@ -6,19 +6,35 @@ from utils.COCO_Utils.COCO_like_dataset import CocoLikeDataset
 from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
 
+import json
 
 if __name__ == '__main__' :
     parser = argparse.ArgumentParser()
-    parser.add_argument('-dataset_name', help='dataset name', type=str, choices=['DocExplore', 'flickrlogos_47'], default='flickrlogos_47')
-    parser.add_argument('-query_path', help='path to queries', type=str, default = '/mnt/BE6CA2E26CA294A5/Datasets/flickrlogos_47_COCO/images/queries_train/')
+    #parser.add_argument('-dataset_name', help='dataset name', type=str, choices=['DocExplore', 'flickrlogos_47'], default='flickrlogos_47')
+    #parser.add_argument('-query_path', help='path to queries', type=str, default = '/mnt/BE6CA2E26CA294A5/Datasets/flickrlogos_47_COCO/images/queries_train/')
     parser.add_argument('-model', help='model used for the convolutional features', type=str, choices=['resnet', 'VGG16'], default='VGG16') 
     parser.add_argument('-layer', help='resnet layer used for extraction', type=str, choices=['conv1_relu', 'conv2_block3_out', 'conv3_block4_out', 'conv4_block6_out', 'conv5_block3_out', 'block3_conv3', 'block4_conv3', 'block5_conv3'], default='block3_conv3') 
-    parser.add_argument('-feat_savedir', help='directory of features database', type=str, default='/home/jeancherubini/Documents/feature_maps')
+    #parser.add_argument('-feat_savedir', help='directory of features database', type=str, default='/home/jeancherubini/Documents/feature_maps')
     parser.add_argument('-principal_components', help='amount of components kept (depth of feature vectors)', type=str, default='64')   
     parser.add_argument('-th_value', help='threshhold value to keep image', type=float, default=0.1)
+    parser.add_argument('cfg', help='config file with paths', type=str, default = "configs/local_DocExplore.json")
 
     params = parser.parse_args()    
+
+    #Complete argswith routes from config file
+    with open(params.cfg) as json_data_file:
+        cfg_data = json.load(json_data_file)
     
+    params.dataset_name = cfg_data['dataset_name']
+    params.coco_images = cfg_data['coco_images']
+    params.annotation_json = cfg_data['annotation_json'] 
+    params.query_path = cfg_data['query_path']
+    params.feat_savedir = cfg_data['feat_savedir']
+
+
+    print(params)
+
+
     all_detections = open('{0}/{1}/{2}/detections/all_detections.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer + '/' + params.principal_components ),'w')
     errors = open('{0}/{1}/{2}/detections/errors.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer + '/' + params.principal_components ) ,'w')
 

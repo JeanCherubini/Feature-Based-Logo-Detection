@@ -1,0 +1,7 @@
+{
+    "dataset_name":"DocExplore",
+    "coco_images":"/mnt/BE6CA2E26CA294A5/Datasets/DocExplore_COCO/images" ,
+    "annotation_json": "/mnt/BE6CA2E26CA294A5/Datasets/DocExplore_COCO/annotations/instances.json",
+    "feat_savedir":"/mnt/BE6CA2E26CA294A5/Resultados_Memoria/",
+    "query_path":"/mnt/BE6CA2E26CA294A5/Datasets/DocExplore_COCO/images/queries"
+}

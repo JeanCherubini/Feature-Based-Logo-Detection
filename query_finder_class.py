@@ -320,7 +320,7 @@ class query_finder():
                         features = tf.convert_to_tensor(features)
                         features = tf.dtypes.cast(features, tf.float32)
 
-                        print('features shape:{0} \nquery_shape: {1}'.format(features.shape, final_query_features.shape))
+                        #print('features shape:{0} \nquery_shape: {1}'.format(features.shape, final_query_features.shape))
 
                         #convolution between feature batch of images and features of the query 
                         heatmaps = tf.nn.convolution(features, final_query_features, padding = 'SAME', strides=[1,1,1,1])

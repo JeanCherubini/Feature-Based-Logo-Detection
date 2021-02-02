@@ -1,0 +1,7 @@
+{
+    "dataset_name":"flickrlogos_47",
+    "coco_images":"" ,
+    "annotation_json": "",
+    "feat_savedir":"",
+    "query_path":""
+}
