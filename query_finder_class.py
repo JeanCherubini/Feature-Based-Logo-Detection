@@ -180,14 +180,14 @@ class query_finder():
             #if False:
             #    print()
 
-            elif not os.path.isfile('{0}/{1}/{2}/{3}/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)):
+            elif not os.path.isfile('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)):
                 #Create file for times 
-                time_file = open('{0}/{1}/{2}/{3}/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
+                time_file = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
                 time_file.close()
         
             else: 
                 #Open time file
-                time_file = open('{0}/{1}/{2}/{3}/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'a')
+                time_file = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'a')
 
 
                 #creation of dataset like coco
