@@ -75,6 +75,20 @@ def yield_batch_for_PCA_retinanet(batches, layer):
             yield features_reshaped_PCA
 
         
+def split_image(image, annotations):
+    n, height, width, channels = image.shape()
+
+    half_point = int(width/2)
+
+    split_1 = np.zeros([n,height,int(width/2),channels])
+    split_2 = np.zeros([n,height,int(width/2),channels])
+
+    split_1 = image[:,:,:half_point,:]
+    split_2 = image[:,:,half_point:,:]
+
+    return split_1, split_2
+
+        
 
 if __name__ == '__main__' :
     parser = argparse.ArgumentParser()
@@ -128,11 +142,7 @@ if __name__ == '__main__' :
         try:
             for gpu in gpus:
                 tf.config.experimental.set_memory_growth(gpu, True)
-        except Run GPU_0_bfc
-batch 655
-
-
-Error as e:
+        except RuntimeError as e:
             print(e)
 
     if params.model!='retinanet':
@@ -200,8 +210,12 @@ Error as e:
                     #original image
                     images = train_images.load_image_batch(batch, params.model)['padded_images']/255
                     annotations = train_images.load_annotations_batch(batch)
-                    print(annotations)
-                        
+
+                    split_1, split_2 = split_image(images)
+                    print('images', images.shape)
+                    print('split_1',split_1.shape)
+                    print('split_2',split_2.shape)
+
                     #features extracted
                     features_batch = intermediate_model(images, training=False)
 
