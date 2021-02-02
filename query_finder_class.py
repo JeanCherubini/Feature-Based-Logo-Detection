@@ -60,7 +60,7 @@ def delete_border_values(heatmaps, original_image_sizes, query):
         canvas[hmap_index, y_elimination_border_query:o_height-y_elimination_border_query, x_elimination_border_query:o_width - x_elimination_border_query, :] = extracted_image
 
     heatmaps = tf.convert_to_tensor(canvas)
-    print('Time on deleting borders: {:.3f}'.format(time()-t_deletion))
+    #print('Time on deleting borders: {:.3f}'.format(time()-t_deletion))
     return heatmaps
 
 def get_p_maximum_values(image_ids, heatmaps, query, p):
@@ -388,7 +388,7 @@ class query_finder():
                     #    break
 
                 t_procesamiento = time()-t_inicio
-                time_file.write('{}\t{}\n'.format(query_instance, t_procesamiento))
+                time_file.write('{0}\t{1}\n'.format(query_instance, t_procesamiento))
                 time_file.close()
                 print('t_procesamiento', t_procesamiento)
 
