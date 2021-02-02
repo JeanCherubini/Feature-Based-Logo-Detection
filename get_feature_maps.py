@@ -75,7 +75,7 @@ def yield_batch_for_PCA_retinanet(batches, layer):
             yield features_reshaped_PCA
 
         
-def split_image(image, annotations):
+def split_image(image):
     n, height, width, channels = image.shape()
 
     half_point = int(width/2)
