@@ -260,7 +260,7 @@ class query_finder():
                 height_feat_query, width_feat_query, channels_feat_query = final_query_features.shape
 
 
-                while width_feat_query>20 or height_feat_query>20:
+                while width_feat_query>50 or height_feat_query>50:
                     final_query_features = tf.image.resize(final_query_features, [int(height_feat_query*0.75), int(width_feat_query*0.75)], preserve_aspect_ratio = True)
                     height_feat_query, width_feat_query, channels_feat_query = final_query_features.shape
                     print('query_shape resized:', height_feat_query, width_feat_query, channels_feat_query)
