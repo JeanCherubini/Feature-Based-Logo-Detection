@@ -211,11 +211,6 @@ if __name__ == '__main__' :
                     images = train_images.load_image_batch(batch, params.model)['padded_images']/255
                     annotations = train_images.load_annotations_batch(batch)
 
-                    split_1, split_2 = split_image(images)
-                    print('images', images.shape)
-                    print('split_1',split_1.shape)
-                    print('split_2',split_2.shape)
-
                     #features extracted
                     features_batch = intermediate_model(images, training=False)
 
@@ -546,29 +541,31 @@ if __name__ == '__main__' :
                 #original image
                 images = train_images.load_image_batch([big_image], params.model)['padded_images']/255
                 annotations = train_images.load_annotations_batch([big_image])
+
+                for split in split_image(images):                   
                     
-                #features extracted
-                features_batch = intermediate_model(images, training=False)
+                    #features extracted
+                    features_batch = intermediate_model(split, training=False)
 
-                b, height, width, channels = features_batch.shape
-                
-                #features reshaped for PCA transformation
-                features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
-                
-                #PCA
-                pca_features = pca.transform(features_reshaped_PCA)
+                    b, height, width, channels = features_batch.shape
+                    
+                    #features reshaped for PCA transformation
+                    features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
+                    
+                    #PCA
+                    pca_features = pca.transform(features_reshaped_PCA)
 
-                #l2_normalization        
-                pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
-                                epsilon=1e-12, name=None)
+                    #l2_normalization        
+                    pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
+                                    epsilon=1e-12, name=None)
 
-                #Go back to original shape
-                features_to_save = tf.reshape(pca_features, (b,height,width,params.principal_components))
+                    #Go back to original shape
+                    features_to_save = tf.reshape(pca_features, (b,height,width,params.principal_components))
 
-                np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':[big_image], 'features':features_to_save, 'annotations':annotations})
+                    np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':[big_image], 'features':features_to_save, 'annotations':annotations})
 
-                print('batch:', batch_counter, features_to_save.shape)
-                batch_counter+=1
+                    print('batch:', batch_counter, features_to_save.shape)
+                    batch_counter+=1
             except:
                 error_log.write('image with id {} impossible to allocate\n'.format(big_image))
                 continue
