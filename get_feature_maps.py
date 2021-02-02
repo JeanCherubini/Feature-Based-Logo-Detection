@@ -128,7 +128,11 @@ if __name__ == '__main__' :
         try:
             for gpu in gpus:
                 tf.config.experimental.set_memory_growth(gpu, True)
-        except RuntimeError as e:
+        except Run GPU_0_bfc
+batch 655
+
+
+Error as e:
             print(e)
 
     if params.model!='retinanet':
