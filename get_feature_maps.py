@@ -206,7 +206,7 @@ if __name__ == '__main__' :
         for batch in list(batches):
             try:
                 if not failed:
-                    print('batch', batch)
+                    print('images in batch', batch)
                     #original image
                     images = train_images.load_image_batch(batch, params.model)['padded_images']/255
                     annotations = train_images.load_annotations_batch(batch)
@@ -246,7 +246,7 @@ if __name__ == '__main__' :
                     np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations, 'is_split':0})
                     
 
-                    print('batch:', batch_counter, features_to_save.shape)
+                    print('batch number:', batch_counter, features_to_save.shape)
                     batch_counter+=1
                 elif(failed):
                     failed_batches = np.concatenate((failed_batches,batch))
@@ -264,7 +264,7 @@ if __name__ == '__main__' :
             for batch in list(batches):
                 try:
                     if not failed:
-                        print('batch',batch)
+                        print('images in batch',batch)
                         #original image
                         images = train_images.load_image_batch(batch, params.model)['padded_images']/255
                         annotations = train_images.load_annotations_batch(batch)
@@ -299,7 +299,7 @@ if __name__ == '__main__' :
 
                         np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations, 'is_split':0})
 
-                        print('batch:', batch_counter, features_to_save.shape)
+                        print('batch number:', batch_counter, features_to_save.shape)
                         batch_counter+=1
 
                         #condicion de termino                    
@@ -369,12 +369,12 @@ if __name__ == '__main__' :
                         pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
                                         epsilon=1e-12, name=None)
 
-                    #Go back to original shape
-                    features_to_save = tf.reshape(pca_features, (b,height,width,channels))
+                        #Go back to original shape
+                        features_to_save = tf.reshape(pca_features, (b,height,width,channels))
 
                     np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':[big_image], 'features':features_to_save, 'annotations':annotations, 'is_split':split_counter})
 
-                    print('batch counter:', batch_counter, features_to_save.shape, split_counter)
+                    print('batch number:', batch_counter, features_to_save.shape, split_counter)
 
                     batch_counter += 1
                     split_counter += 1
