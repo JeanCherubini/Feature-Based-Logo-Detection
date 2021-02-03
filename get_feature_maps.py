@@ -331,9 +331,14 @@ if __name__ == '__main__' :
                 annotations = train_images.load_annotations_batch([big_image])
 
                 split_counter = 0
+
+                print('images', images.shape)
+
                 for split in split_image(images):
                     #features extracted
-                    features_batch = intermediate_model(images, training=False)
+                    features_batch = intermediate_model(split, training=False)
+
+                    print('split', split.shape)
 
                     b, height, width, channels = features_batch.shape
                     
