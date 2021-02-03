@@ -74,6 +74,6 @@ if __name__ == '__main__' :
     finder = query_finder()
 
     for query_class in os.listdir(params.query_path):
-        for query_instance in os.listdir(params.query_path + '/' + query_class):
+        for query_instance in sorted(os.listdir(params.query_path + '/' + query_class)):
             finder.search_query(params, query_class, query_instance)
             break
