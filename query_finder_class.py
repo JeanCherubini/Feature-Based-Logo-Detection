@@ -184,6 +184,13 @@ class query_finder():
             #    print()
 
             elif not os.path.isfile('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)):
+                #create folder for results
+                if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name):
+                    os.mkdir(params.feat_savedir +'/' + params.dataset_name)
+
+                if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections'):
+                    os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections')
+            
                 #Create file for times 
                 time_file = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
                 time_file.close()
