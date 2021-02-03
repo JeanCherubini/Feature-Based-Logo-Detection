@@ -107,9 +107,11 @@ def get_p_maximum_values(image_ids, heatmaps, query, p, is_split):
             '''
             #deletion of box
             current_hmap[y_del_begin:y_del_begin + height_query, x_del_begin:x_del_begin + width_query] = 0
-            if not is_split:
+            if not is_split or is_split == 1:
                 point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin, y_del_begin, height_query, width_query], 'value':maximum_value} 
-            if is_split:
+            
+            #Add width of image to detection only if its split number 2
+            if is_split == 2:
                 point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin+width, y_del_begin, height_query, width_query], 'value':maximum_value} 
 
             p_points.append(point)
@@ -317,6 +319,7 @@ class query_finder():
                         annotations = data.item().get('annotations')
                         is_split = data.item().get('is_split')
 
+                        
                         #list of original batch image sizes without padding
                         original_image_sizes = train_images.load_image_batch(image_ids, params.model)['original_sizes']
 

@@ -330,7 +330,7 @@ if __name__ == '__main__' :
                 images = train_images.load_image_batch([big_image], params.model)['padded_images']/255
                 annotations = train_images.load_annotations_batch([big_image])
 
-                split_counter = 0
+                split_counter = 1
 
                 print('images', images.shape)
 
