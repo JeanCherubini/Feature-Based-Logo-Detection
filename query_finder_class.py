@@ -317,7 +317,6 @@ class query_finder():
                         features = data.item().get('features')
                         annotations = data.item().get('annotations')
                         is_split = data.item().get('is_split')
-                        print(is_split.dtype)
 
                         #list of original batch image sizes without padding
                         original_image_sizes = train_images.load_image_batch(image_ids, params.model)['original_sizes']
