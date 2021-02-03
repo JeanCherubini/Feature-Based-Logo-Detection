@@ -271,7 +271,7 @@ class query_finder():
                 height_feat_query, width_feat_query, channels_feat_query = final_query_features.shape
 
 
-                while width_feat_query>50 or height_feat_query>50:
+                while width_feat_query>80 or height_feat_query>80:
                     final_query_features = tf.image.resize(final_query_features, [int(height_feat_query*0.75), int(width_feat_query*0.75)], preserve_aspect_ratio = True)
                     height_feat_query, width_feat_query, channels_feat_query = final_query_features.shape
                     print('query_shape resized:', height_feat_query, width_feat_query, channels_feat_query)
@@ -319,7 +319,7 @@ class query_finder():
                         annotations = data.item().get('annotations')
                         is_split = data.item().get('is_split')
 
-                        
+
                         #list of original batch image sizes without padding
                         original_image_sizes = train_images.load_image_batch(image_ids, params.model)['original_sizes']
 
