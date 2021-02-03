@@ -361,7 +361,8 @@ if __name__ == '__main__' :
 
                     np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':[big_image], 'features':features_to_save, 'annotations':annotations, 'is_split':split_counter})
 
-                    print('batch:', batch_counter, features_to_save.shape)
+                    print('batch:', batch_counter, features_to_save.shape, split_counter)
+
                     batch_counter += 1
                     split_counter += 1
             except:
