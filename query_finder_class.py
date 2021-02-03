@@ -105,7 +105,6 @@ def get_p_maximum_values(image_ids, heatmaps, query, p, is_split):
             print('x_max',x_max, 'y_max',y_max,'bbox',x_del_begin, y_del_begin, height_query, width_query, 'value', maximum_value)
             plt.show()
             '''
-            print(is_split)
             #deletion of box
             current_hmap[y_del_begin:y_del_begin + height_query, x_del_begin:x_del_begin + width_query] = 0
             if not is_split:
