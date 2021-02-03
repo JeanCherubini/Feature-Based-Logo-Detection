@@ -243,7 +243,7 @@ if __name__ == '__main__' :
 
 
 
-                    np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations})
+                    np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations, 'is_split':0})
                     
 
                     print('batch:', batch_counter, features_to_save.shape)
@@ -297,7 +297,7 @@ if __name__ == '__main__' :
 
                         
 
-                        np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations})
+                        np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations, 'is_split':0})
 
                         print('batch:', batch_counter, features_to_save.shape)
                         batch_counter+=1
@@ -329,44 +329,46 @@ if __name__ == '__main__' :
                 #original image
                 images = train_images.load_image_batch([big_image], params.model)['padded_images']/255
                 annotations = train_images.load_annotations_batch([big_image])
+
+                split_counter = 0
+                for split in split_image(images):
+                    #features extracted
+                    features_batch = intermediate_model(images, training=False)
+
+                    b, height, width, channels = features_batch.shape
                     
-                #features extracted
-                features_batch = intermediate_model(images, training=False)
+                    #features reshaped for PCA transformation
+                    features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
 
-                b, height, width, channels = features_batch.shape
-                
-                #features reshaped for PCA transformation
-                features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
+                    if(params.principal_components>=1):                   
+                        #PCA
+                        pca_features = pca.transform(features_reshaped_PCA)
+                        #l2_normalization        
+                        pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
+                                        epsilon=1e-12, name=None)
 
-                if(params.principal_components>=1):                   
-                    #PCA
-                    pca_features = pca.transform(features_reshaped_PCA)
-                    #l2_normalization        
-                    pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
-                                    epsilon=1e-12, name=None)
-
-                    #Go back to original shape
-                    features_to_save = tf.reshape(pca_features, (b,height,width,params.principal_components))
-                else:
-                    pca_features = features_reshaped_PCA
-                    
-                    #l2_normalization        
-                    pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
-                                    epsilon=1e-12, name=None)
+                        #Go back to original shape
+                        features_to_save = tf.reshape(pca_features, (b,height,width,params.principal_components))
+                    else:
+                        pca_features = features_reshaped_PCA
+                        
+                        #l2_normalization        
+                        pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
+                                        epsilon=1e-12, name=None)
 
                     #Go back to original shape
                     features_to_save = tf.reshape(pca_features, (b,height,width,channels))
 
-                
+                    np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':[big_image], 'features':features_to_save, 'annotations':annotations, 'is_split':split_counter})
 
-                np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':[big_image], 'features':features_to_save, 'annotations':annotations})
-
-                print('batch:', batch_counter, features_to_save.shape)
-                batch_counter+=1
+                    print('batch:', batch_counter, features_to_save.shape)
+                    batch_counter += 1
+                    split_counter += 1
             except:
                 error_log.write('image with id {} impossible to allocate\n'.format(big_image))
                 continue
 
+    '''
     elif params.model=='retinanet':
         #base model
         model = load_retinanet.load_retinanet_FPN_model()
@@ -463,7 +465,7 @@ if __name__ == '__main__' :
                         #Go back to original shape
                         features_to_save = tf.reshape(pca_features, (b,height,width,params.principal_components))
 
-                        np.save(features_path + '/features_{}_{}'.format(batch_counter, layers[layer]), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations})
+                        np.save(features_path + '/features_{}_{}'.format(batch_counter, layers[layer]), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations, 'is_split':False})
                         
                     plt.show()
 
@@ -509,7 +511,7 @@ if __name__ == '__main__' :
                         #Go back to original shape
                         features_to_save = tf.reshape(pca_features, (b,height, width,params.principal_components))
 
-                        np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations})
+                        np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':batch, 'features':features_to_save, 'annotations':annotations, 'is_split':False})
 
                         print('batch:', batch_counter, features_to_save.shape)
                         batch_counter+=1
@@ -541,33 +543,59 @@ if __name__ == '__main__' :
                 #original image
                 images = train_images.load_image_batch([big_image], params.model)['padded_images']/255
                 annotations = train_images.load_annotations_batch([big_image])
+                
+                split_1, split_2 = split_image(images)
 
-                for split in split_image(images):                   
-                    
-                    #features extracted
-                    features_batch = intermediate_model(split, training=False)
+                #Calculate split 1
+                #features extracted
+                features_batch = intermediate_model(split_1, training=False)
 
-                    b, height, width, channels = features_batch.shape
-                    
-                    #features reshaped for PCA transformation
-                    features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
-                    
-                    #PCA
-                    pca_features = pca.transform(features_reshaped_PCA)
+                b, height, width, channels = features_batch.shape
+                
+                #features reshaped for PCA transformation
+                features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
+                
+                #PCA
+                pca_features = pca.transform(features_reshaped_PCA)
 
-                    #l2_normalization        
-                    pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
-                                    epsilon=1e-12, name=None)
+                #l2_normalization        
+                pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
+                                epsilon=1e-12, name=None)
 
-                    #Go back to original shape
-                    features_to_save = tf.reshape(pca_features, (b,height,width,params.principal_components))
+                #Go back to original shape
+                features_to_save = tf.reshape(pca_features, (b,height,width,params.principal_components))
 
-                    np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':[big_image], 'features':features_to_save, 'annotations':annotations})
+                np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':[big_image], 'features':features_to_save, 'annotations':annotations, 'is_split':False})
 
-                    print('batch:', batch_counter, features_to_save.shape)
-                    batch_counter+=1
+                print('batch:', batch_counter, features_to_save.shape)
+                batch_counter+=1
+
+                #Calculate split 2
+                #features extracted
+                features_batch = intermediate_model(split_2, training=False)
+
+                b, height, width, channels = features_batch.shape
+                
+                #features reshaped for PCA transformation
+                features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
+                
+                #PCA
+                pca_features = pca.transform(features_reshaped_PCA)
+
+                #l2_normalization        
+                pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
+                                epsilon=1e-12, name=None)
+
+                #Go back to original shape
+                features_to_save = tf.reshape(pca_features, (b,height,width,params.principal_components))
+
+                np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':[big_image], 'features':features_to_save, 'annotations':annotations, 'is_split':True})
+
+                print('batch:', batch_counter, features_to_save.shape)
+                batch_counter+=1
+
             except:
                 error_log.write('image with id {} impossible to allocate\n'.format(big_image))
                 continue
 
-        
+        '''

@@ -63,7 +63,7 @@ def delete_border_values(heatmaps, original_image_sizes, query):
     #print('Time on deleting borders: {:.3f}'.format(time()-t_deletion))
     return heatmaps
 
-def get_p_maximum_values(image_ids, heatmaps, query, p):
+def get_p_maximum_values(image_ids, heatmaps, query, p, is_split):
     n, height, width, channels = heatmaps.shape
     height_query, width_query, _= query.shape
     x_deletion_query = int(width_query/2)
@@ -108,8 +108,11 @@ def get_p_maximum_values(image_ids, heatmaps, query, p):
 
             #deletion of box
             current_hmap[y_del_begin:y_del_begin + height_query, x_del_begin:x_del_begin + width_query] = 0
- 
-            point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin, y_del_begin, height_query, width_query], 'value':maximum_value} 
+            if not is_split:
+                point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin, y_del_begin, height_query, width_query], 'value':maximum_value} 
+            if is_split:
+                point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin, y_del_begin, height_query, width_query+width], 'value':maximum_value} 
+
             p_points.append(point)
     
     return np.array(p_points)
@@ -306,7 +309,8 @@ class query_finder():
                         image_ids = data.item().get('image_ids')
                         features = data.item().get('features')
                         annotations = data.item().get('annotations')
-
+                        is_split = data.item().get('is_split')
+                        print(is_split.dtype)
 
                         #list of original batch image sizes without padding
                         original_image_sizes = train_images.load_image_batch(image_ids, params.model)['original_sizes']
@@ -373,9 +377,9 @@ class query_finder():
                         t_points=time()
                         #create db with all the maximum points found 
                         if(batch_counter == 0):
-                            p_points = get_p_maximum_values(image_ids, heatmaps, query, params.p)
+                            p_points = get_p_maximum_values(image_ids, heatmaps, query, params.p, is_split)
                         else:
-                            p_points = np.concatenate( (p_points, get_p_maximum_values(image_ids, heatmaps, query, params.p)) )
+                            p_points = np.concatenate( (p_points, get_p_maximum_values(image_ids, heatmaps, query, params.p, is_split)) )
                         #print('Time searching points: {}'.format(time()-t_points))
                                                 
 
