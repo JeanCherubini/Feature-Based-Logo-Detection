@@ -35,6 +35,8 @@ if __name__ == '__main__' :
     #parser.add_argument('-feat_savedir', help='directory of features database', type=str, default='/home/jeancherubini/Documents/feature_maps')
     parser.add_argument('-principal_components', help='amount of components kept (depth of feature vectors)', type=str, default='64')   
     parser.add_argument('-th_value', help='threshhold value to keep image', type=float, default=0.1)
+    parser.add_argument('-cfg', help='config file with paths', type=str)
+
 
     params = parser.parse_args()   
     
