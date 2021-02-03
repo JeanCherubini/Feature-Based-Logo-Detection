@@ -111,7 +111,7 @@ def get_p_maximum_values(image_ids, heatmaps, query, p, is_split):
             if not is_split:
                 point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin, y_del_begin, height_query, width_query], 'value':maximum_value} 
             if is_split:
-                point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin, y_del_begin, height_query, width_query+width], 'value':maximum_value} 
+                point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin+width, y_del_begin, height_query, width_query], 'value':maximum_value} 
 
             p_points.append(point)
     
