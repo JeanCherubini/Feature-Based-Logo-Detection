@@ -45,7 +45,7 @@ if __name__ == '__main__' :
 
     for query_class in query_classes:
         instances = os.listdir('{0}/{1}'.format(params.query_path, query_class))
-        for query_instance in instances:
+        for query_instance in sorted(instances):
             try:
                 #get detections file ordered
                 AP_calculator.get_ordered_detections(params, query_class, query_instance)
