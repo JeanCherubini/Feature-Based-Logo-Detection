@@ -325,7 +325,7 @@ if __name__ == '__main__' :
         #Process each big image separately as single images
         for big_image in big_images:
             try:
-                print('batch',big_image)
+                print('images in batch',big_image)
                 #original image
                 images = train_images.load_image_batch([big_image], params.model)['padded_images']/255
                 annotations = train_images.load_annotations_batch([big_image])
@@ -338,12 +338,17 @@ if __name__ == '__main__' :
                     #features extracted
                     features_batch = intermediate_model(split, training=False)
 
+
+                    #It is not working properly because only one split is shown
                     print('split', split.shape)
 
                     b, height, width, channels = features_batch.shape
                     
                     #features reshaped for PCA transformation
                     features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
+
+                    print('features_reshaped_pca', features_reshaped_PCA.shape)
+
 
                     if(params.principal_components>=1):                   
                         #PCA
@@ -354,6 +359,9 @@ if __name__ == '__main__' :
 
                         #Go back to original shape
                         features_to_save = tf.reshape(pca_features, (b,height,width,params.principal_components))
+                        print('features_to_save', features_to_save.shape)
+
+                        
                     else:
                         pca_features = features_reshaped_PCA
                         
@@ -366,12 +374,13 @@ if __name__ == '__main__' :
 
                     np.save(features_path + '/features_{}'.format(batch_counter), {'image_ids':[big_image], 'features':features_to_save, 'annotations':annotations, 'is_split':split_counter})
 
-                    print('batch:', batch_counter, features_to_save.shape, split_counter)
+                    print('batch counter:', batch_counter, features_to_save.shape, split_counter)
 
                     batch_counter += 1
                     split_counter += 1
             except:
                 error_log.write('image with id {} impossible to allocate\n'.format(big_image))
+                print('Fail')
                 continue
 
     '''
