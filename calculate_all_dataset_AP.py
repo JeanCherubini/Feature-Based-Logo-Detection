@@ -37,7 +37,7 @@ if __name__ == '__main__' :
         os.mkdir('{0}/{1}/{2}/{3}/AP'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components))
 
     file_all_ap = open('{0}/{1}/{2}/{3}/AP/all_AP.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components), 'w')
-
+    file_all_ap.write('class instance 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 \n')
     query_classes = os.listdir(params.query_path)
 
     AP_calculator = AP_calculator_class()
@@ -45,7 +45,7 @@ if __name__ == '__main__' :
 
     for query_class in query_classes:
         instances = os.listdir('{0}/{1}'.format(params.query_path, query_class))
-        for query_instance in sorted(instances):
+        for query_instance in instances:
             try:
                 #get detections file ordered
                 AP_calculator.get_ordered_detections(params, query_class, query_instance)
@@ -54,8 +54,12 @@ if __name__ == '__main__' :
                 file_ap = open('{0}/{1}/{2}/{3}/AP/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png', '').replace('.jpg','')), 'r')    
                 file_all_ap.write('{0} {1} {2}\n'.format(query_class, query_instance,file_ap.readline()))
                 file_ap.close()
-
+                
             except:
                 print('Detections file for query class {0} instance {1} not found'.format(query_class, query_instance))
     
+
+    AP_calculator.create_all_dataset_detections_file(params)
+    AP_calculator.ps_task_transformation(params)
+
     file_all_ap.close()

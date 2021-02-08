@@ -182,8 +182,12 @@ class AP_calculator_class():
         #create ordered_results file
         query_results_ordered = open('{0}/{1}/{2}/{3}/detections_ordered/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')), 'w')
 
+        counter_detections = 0
         for line in sorted(query_results, key=lambda line: line.split()[-2], reverse=True):
             query_results_ordered.write(line)
+            counter_detections+=1
+            if counter_detections==1000:
+                break
         
         query_results_ordered.close()
 
@@ -267,7 +271,7 @@ class AP_calculator_class():
             #calculate precision recall
             recalls, precisions = calculate_precision_recall(query_results_ordered, all_annotations_this_class, iou)
             calculated_interpolated_AP = calculate_interpolated_AP(recalls, precisions,0.1)
-            file_AP.write('{0}:{1:2.2f} '.format(iou, calculated_interpolated_AP) )
+            file_AP.write('{0:2.2f} '.format(calculated_interpolated_AP))
             APS[iou] = calculated_interpolated_AP
         print(query_instance, APS)
 
@@ -380,4 +384,115 @@ class AP_calculator_class():
         '''
         plt.close()
         
+        return 0
+
+
+    def create_all_dataset_detections_file(self, params):
+        all_detections = open('{0}/{1}/{2}/detections/all_detections.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer + '/' + params.principal_components ),'w')
+        errors = open('{0}/{1}/{2}/detections/errors.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer + '/' + params.principal_components ) ,'w')
+
+        query_classes = os.listdir(params.query_path)
+        for query_class in query_classes:
+            instances = os.listdir('{0}/{1}'.format(params.query_path, query_class))
+            for query_instance in instances:
+                try:
+                    result_query = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png','').replace('.jpg','')),'r')
+                    last_row=''
+                    for row in result_query:
+                        if row!=last_row:
+                            all_detections.write(query_instance.replace('.png','').replace('.jpg','') + ' ' + row)
+                            last_row = row
+                    result_query.close()
+                except:
+                    errors.write('Error finding detections for query class {} instance {}\n'.format(query_class, query_instance.replace('.png','').replace('.jpg','')))
+                    continue
+        errors.close()
+        all_detections.close()
+
+        #Sort detections in a document
+        #Open all detections document
+        all_detections = open('{0}/{1}/{2}/{3}/detections/all_detections.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'r')
+        
+        #Open file where detections ordered by value will be written
+        all_detections_ordered = open('{0}/{1}/{2}/{3}/detections/all_detections_ordered.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
+
+        detections_by_value_and_query_id = {}
+
+        all_detections_filename = '{0}/{1}/{2}/{3}/detections/all_detections.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)
+        all_detections_ordered_filename = '{0}/{1}/{2}/{3}/detections/all_detections_ordered.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)
+
+        with open(all_detections_filename,'r') as all_detections:
+            rows = all_detections.readlines()
+            sorted_rows = sorted(rows, key=lambda x: float(x.split()[6]), reverse=True)
+            with open(all_detections_ordered_filename,'w') as second_file:
+                for row in sorted_rows:
+                    if(float(row.split()[6])>=params.th_value):
+                        all_detections_ordered.write(row)
+
+        return 0
+
+    
+    def ps_task_transformation(self, params):
+
+        #creation of dataset like coco
+        train_images = CocoLikeDataset()
+        train_images.load_data(params.annotation_json, params.coco_images)
+        train_images.prepare()
+
+        #Open all detections document
+        all_detections_ordered = open('{0}/{1}/{2}/{3}/detections/all_detections_ordered.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'r')
+
+        #Create dict to group by query for pattern spotting
+        detections_by_query_id = {}
+        recoveries_by_query_id = {}
+        counter_query_id = {}
+        for row in all_detections_ordered:
+            #image retrieval
+            query_id, image_detected, x1, y1, height, width, value, query_class = row.split(' ') 
+            
+            image_info = train_images.image_info[int(image_detected)]
+            page = os.path.basename(image_info['path'])
+            page_cut_extension = page.replace('page','').replace('.jpg', '').replace('.png', '')
+            #print(image_detected, page)
+
+            x2 = int(x1)+int(width)
+            y2 = int(y1)+int(height)
+            
+            try:
+                if counter_query_id[query_id]<1000:
+                    detections_by_query_id[query_id]+= ('{0}-{1}-{2}-{3}-{4} '.format(page_cut_extension, x1, y1, x2, y2))
+                    recoveries_by_query_id[query_id]+= ('{0}\t'.format(page_cut_extension))
+
+                    counter_query_id[query_id] += 1
+
+            except:
+                detections_by_query_id[query_id] = '{0}-{1}-{2}-{3}-{4} '.format(page_cut_extension, x1, y1, x2, y2)
+                recoveries_by_query_id[query_id] = ('{0}\t'.format(page_cut_extension))
+
+                counter_query_id[query_id] = 1
+
+                    
+
+
+        #open file to sav ps
+        ps_for_DocExplore = open('{0}/{1}/{2}/{3}/detections/ps_for_DocExplore.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
+        
+        ps_for_DocExplore_results = open('{0}/{1}/{2}/{3}/detections/ps_for_DocExplore_results.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
+        ps_for_DocExplore_results.close()
+
+
+        for query_class in os.listdir(params.query_path):
+            for query_instance in os.listdir(params.query_path + '/' + query_class):
+                try:
+                    ps_for_DocExplore.write('{0}:{1}\n'.format(query_instance.replace('.jpg', '').replace('.png',''), detections_by_query_id[query_instance.replace('.jpg', '').replace('.png','')]))
+
+                except:
+                    ps_for_DocExplore.write('{0}:\n'.format(query_instance.replace('.jpg', '').replace('.png','')))
+
+
+        '''
+        for query in detections_by_query_id.keys():
+            ps_for_DocExplore.write('{0}:{1}\n'.format(query, detections_by_query_id[query]))
+        '''
+        ps_for_DocExplore.close()
         return 0

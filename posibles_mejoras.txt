@@ -1,0 +1,1 @@
+- Sólo almacenar las características completas y transformar con PCA según se desee.
