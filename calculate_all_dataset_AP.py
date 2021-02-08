@@ -60,6 +60,7 @@ if __name__ == '__main__' :
     
 
     AP_calculator.create_all_dataset_detections_file(params)
-    AP_calculator.ps_task_transformation(params)
+    if params.dataset_name == 'DocExplore':
+        AP_calculator.ps_task_transformation(params)
 
     file_all_ap.close()
