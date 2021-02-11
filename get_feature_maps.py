@@ -332,7 +332,7 @@ class feature_getter_class():
                     print('Fail')
                     continue
         
-        return
+        return 0
         
 
 if __name__ == '__main__' :
