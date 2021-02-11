@@ -170,9 +170,9 @@ def get_bounding_boxes(top_images_ids, top_images_detections, query):
     return bboxes, values
 
 
+    
+
 class query_finder():
-
-
     
     def search_query(self, params, query_class, query_instance):
         #check if result already exists
