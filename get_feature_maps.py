@@ -67,7 +67,7 @@ def yield_batch_for_PCA(batches, train_images, intermediate_model):
                     features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
                     print('features reshaped for PCA', features_reshaped_PCA.shape)
 
-                    batch_counter+=1
+                    batch_counter+=0.5
                     if batch_counter>params.batches_pca:
                         break
                         

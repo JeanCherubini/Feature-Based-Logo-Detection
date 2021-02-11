@@ -1,8 +1,11 @@
 import os
 import json
 import matplotlib.image as mpimg
+import matplotlib.pyplot as plt
+import numpy as np
 from datetime import datetime
 from pathlib import Path
+from skimage import io, transform
 
 
 def main():
@@ -18,8 +21,12 @@ def create_instances_file(images_pool_dir, queries_dir, annotations_file):
     if not os.path.isdir(annotations_folder):
         os.mkdir(annotations_folder)
 
+    images_folder = '{0}/images/'.format(parent_dir)
+    if not os.path.isdir(images_folder):
+        os.mkdir(images_folder)
 
-    print(annotations_folder)
+
+    print(images_folder)
 
 
     if annotations_file == '':
@@ -42,8 +49,16 @@ def create_instances_file(images_pool_dir, queries_dir, annotations_file):
             #Obtener propiedades de la imagen
             img = mpimg.imread(path_to_img)
             assert(len(img.shape) == 3)
-            width = img.shape[0]
-            height = img.shape[1] 
+   
+            resized_img = transform.rescale(img, [1/2,1/2,1], anti_aliasing=True)
+            rotated_img = transform.rotate(resized_img,-90,resize=True)
+
+
+            destino_imagen = '{0}/{1}'.format(images_folder, image)
+            mpimg.imsave(destino_imagen, rotated_img)
+
+            width = resized_img.shape[0]
+            height = resized_img.shape[1]
             date_captured = datetime.now()
             #Almacenamiento de la informacion de la imagen
             images.append({"id":id_image_counter, "license":"", "width":width, "height":height, "file_name":image, "date_captured":str(date_captured)})

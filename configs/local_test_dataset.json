@@ -1,6 +1,6 @@
 {
     "dataset_name":"test",
-    "coco_images":"/home/jeancherubini/Downloads/isotonicas/mapa" ,
+    "coco_images":"/home/jeancherubini/Downloads/isotonicas/images" ,
     "annotation_json": "/home/jeancherubini/Downloads/isotonicas/annotations/instances.json",
     "feat_savedir":"/home/jeancherubini/Downloads/isotonicas/features",
     "query_path":"/home/jeancherubini/Downloads/isotonicas/queries" 
