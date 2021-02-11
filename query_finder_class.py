@@ -245,7 +245,16 @@ class query_finder():
                     pca_dir = params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/' + str(params.principal_components) +'/PCA/'
                     pca = pk.load(open(pca_dir + "/pca_{}.pkl".format(params.principal_components),'rb'))
 
-                #Queryu procesing
+                #Resize big queries
+                height_feat_query, width_feat_query, channels_feat_query = query.shape
+
+
+                while width_feat_query>240 or height_feat_query>240:
+                    query = tf.image.resize(query, [int(height_feat_query*0.75), int(width_feat_query*0.75)], preserve_aspect_ratio = True)
+                    height_feat_query, width_feat_query, channels_feat_query = query.shape
+                    print('query_shape resized:', height_feat_query, width_feat_query, channels_feat_query)
+
+                #Query procesing
                 features_query = intermediate_model(query, training=False)
 
                 b, height, width, channels = features_query.shape
@@ -266,7 +275,8 @@ class query_finder():
                 #Go back to original shape
                 final_query_features = tf.reshape(pca_features, (height, width,pca_features.shape[-1]))
 
-
+                
+                '''
                 #Resize big queries
                 height_feat_query, width_feat_query, channels_feat_query = final_query_features.shape
 
@@ -275,7 +285,7 @@ class query_finder():
                     final_query_features = tf.image.resize(final_query_features, [int(height_feat_query*0.75), int(width_feat_query*0.75)], preserve_aspect_ratio = True)
                     height_feat_query, width_feat_query, channels_feat_query = final_query_features.shape
                     print('query_shape resized:', height_feat_query, width_feat_query, channels_feat_query)
-         
+                '''
 
                 #Casting ino float32 dtype
                 final_query_features = tf.dtypes.cast(final_query_features, tf.float32)
