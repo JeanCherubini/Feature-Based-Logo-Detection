@@ -246,12 +246,12 @@ class query_finder():
                     pca = pk.load(open(pca_dir + "/pca_{}.pkl".format(params.principal_components),'rb'))
 
                 #Resize big queries
-                height_feat_query, width_feat_query, channels_feat_query = query.shape
+                channels_query, height_feat_query, width_feat_query, channels_feat_query = query.shape
 
 
                 while width_feat_query>240 or height_feat_query>240:
                     query = tf.image.resize(query, [int(height_feat_query*0.75), int(width_feat_query*0.75)], preserve_aspect_ratio = True)
-                    height_feat_query, width_feat_query, channels_feat_query = query.shape
+                    channels_query, height_feat_query, width_feat_query, channels_feat_query = query.shape
                     print('query_shape resized:', height_feat_query, width_feat_query, channels_feat_query)
 
                 #Query procesing
