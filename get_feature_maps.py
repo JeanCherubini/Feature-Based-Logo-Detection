@@ -33,25 +33,46 @@ def get_layer_model(model,layer_name):
 def yield_batch_for_PCA(batches, train_images, intermediate_model):
         batch_counter=0
         for batch in list(batches):
-            #original images for training
-            images = train_images.load_image_batch(batch, params.model)['padded_images']/255
+            try:
+                #original images for training
+                images = train_images.load_image_batch(batch, params.model)['padded_images']/255
 
-            print('batch shape', images.shape)
+                print('batch shape', images.shape)
 
-            #features extracted
-            features_batch = intermediate_model(images, training=False)
+                #features extracted
+                features_batch = intermediate_model(images, training=False)
 
-            b, height, width, channels = features_batch.shape
-            
-            #features reshaped for PCA transformation
-            features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
-            print('features reshaped for PCA', features_reshaped_PCA.shape)
-
-            batch_counter+=1
-            if batch_counter>params.batches_pca:
-                break
+                b, height, width, channels = features_batch.shape
                 
-            yield features_reshaped_PCA
+                #features reshaped for PCA transformation
+                features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
+                print('features reshaped for PCA', features_reshaped_PCA.shape)
+
+                batch_counter+=1
+                if batch_counter>params.batches_pca:
+                    break
+                    
+                yield features_reshaped_PCA
+            except:
+                splits = split_image(images)
+                for split in splits:
+                    print('split shape', split.shape)
+
+                    #features extracted
+                    features_batch = intermediate_model(split, training=False)
+
+                    b, height, width, channels = features_batch.shape
+                    
+                    #features reshaped for PCA transformation
+                    features_reshaped_PCA = tf.reshape(features_batch, (b*height*width,channels))
+                    print('features reshaped for PCA', features_reshaped_PCA.shape)
+
+                    batch_counter+=1
+                    if batch_counter>params.batches_pca:
+                        break
+                        
+                    yield features_reshaped_PCA
+
         
 def split_image(image):
     n, height, width, channels = image.shape
