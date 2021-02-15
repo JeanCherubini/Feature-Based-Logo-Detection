@@ -247,18 +247,22 @@ class query_finder():
 
                 #Resize big queries
                 number_of_queries, height_feat_query, width_feat_query, channels_feat_query = query.shape
-
-
-                while width_feat_query>240 or height_feat_query>240:
+                while width_feat_query>400 or height_feat_query>400:
                     query = tf.image.resize(query, [int(height_feat_query*0.75), int(width_feat_query*0.75)], preserve_aspect_ratio = True)
                     number_of_queries, height_feat_query, width_feat_query, channels_feat_query = query.shape
-                    print('query_shape resized:', height_feat_query, width_feat_query, channels_feat_query)
+                    print('query_shape downsized:', height_feat_query, width_feat_query, channels_feat_query)
+
+                #If query is too thin in one side
+                while width_feat_query<16 or height_feat_query<16:
+                    query = tf.image.resize(query, [int(height_feat_query*1.25), int(width_feat_query*1.25)], preserve_aspect_ratio = True)
+                    number_of_queries, height_feat_query, width_feat_query, channels_feat_query = query.shape
+                    print('query_shape upsized:', height_feat_query, width_feat_query, channels_feat_query)
 
                 print('query_shape:', query.shape)
                 #Query procesing
                 features_query = intermediate_model(query, training=False)
-                print('features_query shape:', features_query)
-                print('reduction scale: ', query.shape[1]/features_query.shape[1])
+                print('features_query shape:', features_query.shape)
+                print('reduction scale: ', int(query.shape[1]/features_query.shape[1]))
 
                 b, height, width, channels = features_query.shape
 
