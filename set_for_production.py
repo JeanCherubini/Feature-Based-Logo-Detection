@@ -34,7 +34,7 @@ def create_instances_file(images_pool_dir, queries_dir, annotations_file):
         query_classes = os.listdir(queries_dir)
 
         for id_, name in enumerate(query_classes):
-            obj =  {'supercategories':0,'name':name, 'id':int(id_)}
+            obj =  {'supercategories':0,'name':name, 'id':int(id_+1)}
             categories.append(obj)
 
 

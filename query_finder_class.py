@@ -254,8 +254,11 @@ class query_finder():
                     number_of_queries, height_feat_query, width_feat_query, channels_feat_query = query.shape
                     print('query_shape resized:', height_feat_query, width_feat_query, channels_feat_query)
 
+                print('query_shape:', query.shape)
                 #Query procesing
                 features_query = intermediate_model(query, training=False)
+                print('features_query shape:', features_query)
+                print('reduction scale: ', query.shape[1]/features_query.shape[1])
 
                 b, height, width, channels = features_query.shape
 
