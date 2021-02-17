@@ -501,6 +501,9 @@ class query_finder():
                 if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name):
                     os.mkdir(params.feat_savedir +'/' + params.dataset_name)
 
+                if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer):
+                    os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer)
+
                 if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components)):
                     os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components))
             
