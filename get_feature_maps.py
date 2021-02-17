@@ -338,14 +338,16 @@ class feature_getter_class():
         
 
 if __name__ == '__main__' :
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(formatter_class = argparse.RawTextHelpFormatter)
     #parser.add_argument('-dataset_name', help='dataset name', type=str, choices=['DocExplore', 'flickrlogos_47'], default='flickrlogos_47')
     #parser.add_argument('-coco_images', help='image directory in coco format', type=str, default = '/mnt/BE6CA2E26CA294A5/Datasets/flickrlogos_47_COCO/images/train')
     #parser.add_argument('-annotation_json', help='image directory in coco format', type=str, default = '/mnt/BE6CA2E26CA294A5/Datasets/flickrlogos_47_COCO/annotations/instances_train.json')
     #parser.add_argument('-feat_savedir', help='feature save directory', type=str, default='/home/jeancherubini/Documents/feature_maps')
     parser.add_argument('-principal_components', help='amount of components kept (depth of feature vectors)', type=int, default=64)   
     parser.add_argument('-model', help='model used for the convolutional features', type=str, choices=['resnet', 'VGG16', 'retinanet'], default='VGG16') 
-    parser.add_argument('-layer', help='resnet layer used for extraction', type=str, choices=['nolayer','conv1_relu', 'conv2_block3_out', 'conv3_block4_out', 'conv4_block6_out', 'conv5_block3_out', 'block3_conv3', 'block4_conv3', 'block5_conv3'], default='block3_conv3') 
+    parser.add_argument('-layer', help='resnet layer(s) used for extraction, they can be:\n for VGG: {0}\n for resnet:{1}\n For multiple layers, a semicolon "," can be used to separate '.format(
+    'conv1_relu, conv2_block3_out, conv3_block4_out, conv4_block6_out, conv5_block3_out',
+    'block1_conv2, block2_conv2, block3_conv3, block4_conv3, block5_conv3'), type=str, default='block3_conv3') 
     parser.add_argument('-batch_size', help='size of the batch of features', type=int, default=3)
     parser.add_argument('-batches_pca', help='How many batches to se for PCA training', type=int, default=5)
     parser.add_argument('-cfg', help='config file with paths', type=str)
@@ -363,7 +365,10 @@ if __name__ == '__main__' :
     params.query_path = cfg_data['query_path']
     params.feat_savedir = cfg_data['feat_savedir']
 
+    multiple_layers = params.layer.split(',')
+    print('multiple_layers', multiple_layers)
 
     feature_getter = feature_getter_class()
-
-    feature_getter.get_features(params)
+    for layer in multiple_layers:
+        params.layer = layer
+        feature_getter.get_features(params)
