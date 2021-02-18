@@ -807,6 +807,12 @@ class query_finder():
                         print('Batch {0} processed in {1}'.format(batch_counter, time()-t_batch))
                     except:
                         print('Batch {} missing'.format(batch_counter))
+                        if not(os.path.isfile('{0}/{1}/{2}/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components))):
+                            errors = open('{0}/{1}/{2}/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
+                            errors.close()
+                        errors = open('{0}/{1}/{2}/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'a')
+                        errors.write('Error finding detections for query class {} instance {}\n'.format(query_class, query_instance.replace('.png','').replace('.jpg','')))
+                        return 0
                     
                     
                     #if batch_counter==3:
