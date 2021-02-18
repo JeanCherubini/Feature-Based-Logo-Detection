@@ -565,7 +565,7 @@ class query_finder():
                     print('query_shape downsized:', height_feat_query, width_feat_query, channels_feat_query)
 
                 #If query is too thin in one side
-                while width_feat_query<64 or height_feat_query<64:
+                while width_feat_query<16 or height_feat_query<16:
                     query = tf.image.resize(query, [int(height_feat_query*1.25), int(width_feat_query*1.25)], preserve_aspect_ratio = True)
                     number_of_queries, height_feat_query, width_feat_query, channels_feat_query = query.shape
                     print('query_shape upsized:', height_feat_query, width_feat_query, channels_feat_query)
