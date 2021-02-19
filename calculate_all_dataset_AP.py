@@ -6,6 +6,9 @@ from calculate_AP_class import *
 
 import json
 
+import pandas as pd
+
+
 if __name__ == '__main__' :
     parser = argparse.ArgumentParser()
     #parser.add_argument('-dataset_name', help='dataset name', type=str, choices=['DocExplore', 'flickrlogos_47'], default='flickrlogos_47')
@@ -65,3 +68,25 @@ if __name__ == '__main__' :
         AP_calculator.ps_task_transformation(params)
 
     file_all_ap.close()
+
+
+
+    #Calculate mean AP and time
+    if not os.path.isfile('{0}/{1}/summary_file.txt'.format(params.feat_savedir, params.dataset_name)):
+        summary_file = open('{0}/{1}/summary_file.txt'.format(params.feat_savedir, params.dataset_name), 'w')
+        summary_file.close()
+
+
+    summary_file = open('{0}/{1}/summary_file.txt'.format(params.feat_savedir, params.dataset_name), 'a')
+
+    file_all_AP_pandas = pd.read_csv('{0}/{1}/{2}/{3}/AP/all_AP.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components), sep=" ", header='infer', index_col=0, usecols=[0,11]).rename(columns={'0.5':'{0} ({1})'.format(params.model + '_' + params.layer, params.principal_components)})
+    mean = file_all_AP_pandas.mean()[0]
+
+    file_all_time_pandas = pd.read_csv('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components), sep="\t",names = ['Instance' , 'Layer'], index_col=0, )
+    mean_time = file_all_time_pandas.mean()[0]
+
+
+    summary_file.write('{0} ({1})\t{2:.4f}\t{3:.1f}\n'.format(params.model + '_' + params.layer, params.principal_components, mean, mean_time))
+    summary_file.close()
+
+    

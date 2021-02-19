@@ -811,7 +811,8 @@ class query_finder():
                             errors = open('{0}/{1}/{2}/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
                             errors.close()
                         errors = open('{0}/{1}/{2}/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'a')
-                        errors.write('Error finding detections for query class {} instance {}\n'.format(query_class, query_instance.replace('.png','').replace('.jpg','')))
+                        errors.write('Error finding detections for query class {} instance {} because of batch number {}\n'.format(query_class, query_instance.replace('.png','').replace('.jpg',''), batch_counter))
+                        print("No se encontraron puntos suficientes")
                         return 0
                     
                     
