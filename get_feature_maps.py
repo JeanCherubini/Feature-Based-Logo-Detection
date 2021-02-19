@@ -293,6 +293,9 @@ class feature_getter_class():
                         #It is not working properly because only one split is shown
                         print('split', split.shape)
 
+                        #features extracted
+                        features_batch = intermediate_model(split, training=False)
+
                         b, height, width, channels = features_batch.shape
                         
                         #features reshaped for PCA transformation
