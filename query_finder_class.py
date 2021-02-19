@@ -614,8 +614,8 @@ class query_finder():
                     #plt.imshow(features_query_multilayer[layer][0,:,:,0])
                 
                 #release models
-                intermediate_models = []
-
+                del intermediate_models
+                
                 #take features from all layers and return the same features interpolated to the bigger one (in height and width)
                 features_query_multilayer_reshaped = reshape_to_bigger_features(features_query_multilayer)
 
