@@ -537,8 +537,6 @@ class query_finder():
                 classes_dictionary = train_images.class_info
                 query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==query_class][0]
                 
-                if query_class_num==0:
-                    return 0
 
                 #load desired query
                 if query_instance=='random':
