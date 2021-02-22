@@ -55,7 +55,7 @@ if __name__ == '__main__' :
     parser.add_argument('-model', help='model used for the convolutional features', type=str, choices=['resnet', 'VGG16'], default='VGG16') 
     parser.add_argument('-layer', help='resnet layer(s) used for extraction, they can be:\n for VGG: {0}\n for resnet:{1}\n For multiple layers, a semicolon "," can be used to separate '.format(
     'conv1_relu, conv2_block3_out, conv3_block4_out, conv4_block6_out, conv5_block3_out',
-    'block3_conv3, block4_conv3, block5_conv3'), type=str, default='block3_conv3') 
+    'block1_conv2, block2_conv2, block3_conv3, block4_conv3, block5_conv3'), type=str, default='block3_conv3') 
     parser.add_argument('-p', help='max points collected from each heatmap', type=int, default=15)
     parser.add_argument('-cfg', help='config file with paths', type=str)
 
