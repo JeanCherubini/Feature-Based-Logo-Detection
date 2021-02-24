@@ -78,5 +78,5 @@ if __name__ == '__main__' :
 
     finder = query_finder()
 
-    query = finder.get_query(params, query_class, query_instance)
+    query = finder.get_query(params, params.query_class, params.query_instance)
     finder.search_query(params, params.query_class, params.query_instance, query)
