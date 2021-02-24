@@ -270,7 +270,7 @@ class AP_calculator_class():
             query_results_ordered = open('{0}/{1}/{2}/{3}/detections_ordered/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,query_class,query_instance.replace('.png','').replace('.jpg','')), 'r')
             #calculate precision recall
             recalls, precisions = calculate_precision_recall(query_results_ordered, all_annotations_this_class, iou)
-            calculated_interpolated_AP = calculate_interpolated_AP(recalls, precisions,0.1)
+            calculated_interpolated_AP = calculate_interpolated_AP(recalls, precisions,0.01)
             file_AP.write('{0:2.2f} '.format(calculated_interpolated_AP))
             APS[iou] = calculated_interpolated_AP
         print(query_instance, APS)
@@ -446,6 +446,8 @@ class AP_calculator_class():
         detections_by_query_id = {}
         recoveries_by_query_id = {}
         counter_query_id = {}
+        counter_query_id_image_recovery = {}
+
         for row in all_detections_ordered:
             #image retrieval
             query_id, image_detected, x1, y1, height, width, value, query_class = row.split(' ') 
@@ -461,17 +463,25 @@ class AP_calculator_class():
             try:
                 if counter_query_id[query_id]<1000:
                     detections_by_query_id[query_id]+= ('{0}-{1}-{2}-{3}-{4} '.format(page_cut_extension, x1, y1, x2, y2))
-                    recoveries_by_query_id[query_id]+= ('{0}\t'.format(page_cut_extension))
+                    
 
                     counter_query_id[query_id] += 1
 
             except:
                 detections_by_query_id[query_id] = '{0}-{1}-{2}-{3}-{4} '.format(page_cut_extension, x1, y1, x2, y2)
-                recoveries_by_query_id[query_id] = ('{0}\t'.format(page_cut_extension))
 
                 counter_query_id[query_id] = 1
 
-                    
+            try:
+                if counter_query_id_image_recovery[query_id]<1000:
+                    if page_cut_extension+'\t' not in recoveries_by_query_id[query_id]:
+                        recoveries_by_query_id[query_id]+= ('{0}\t'.format(page_cut_extension))
+
+                    counter_query_id_image_recovery[query_id] += 1
+
+            except:
+                recoveries_by_query_id[query_id] = ('{0}\t'.format(page_cut_extension))
+                counter_query_id_image_recovery[query_id] = 1
 
 
         #open file to sav ps
@@ -488,11 +498,30 @@ class AP_calculator_class():
 
                 except:
                     ps_for_DocExplore.write('{0}:\n'.format(query_instance.replace('.jpg', '').replace('.png','')))
+        ps_for_DocExplore.close()
+
+
+
+        #open file to sav ir
+        im_for_DocExplore = open('{0}/{1}/{2}/{3}/detections/im_for_DocExplore.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
+        
+        im_for_DocExplore_results = open('{0}/{1}/{2}/{3}/detections/im_for_DocExplore_results.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
+        im_for_DocExplore_results.close()
+
+
+        for query_class in os.listdir(params.query_path):
+            for query_instance in os.listdir(params.query_path + '/' + query_class):
+                try:
+                    im_for_DocExplore.write('{0}:{1}\n'.format(query_instance.replace('.jpg', '').replace('.png',''), recoveries_by_query_id[query_instance.replace('.jpg', '').replace('.png','')]))
+
+                except:
+                    im_for_DocExplore.write('{0}:\n'.format(query_instance.replace('.jpg', '').replace('.png','')))
+        im_for_DocExplore.close()
+
 
 
         '''
         for query in detections_by_query_id.keys():
             ps_for_DocExplore.write('{0}:{1}\n'.format(query, detections_by_query_id[query]))
         '''
-        ps_for_DocExplore.close()
         return 0

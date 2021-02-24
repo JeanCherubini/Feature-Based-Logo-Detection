@@ -37,11 +37,6 @@ def get_layer_model(model,layer_name):
     #conv1_relu, conv2_block3_out, conv3_block4_out, conv4_block6_out, conv5_block3_out
     return tf.keras.Model(model.inputs, model.get_layer(layer_name).output)
 
-def get_query(query_path, query_class, instance):
-    query = imread(query_path + '/' + query_class + '/' + instance )/255
-    query = query[:,:,:3]
-    return query
-
 def delete_border_values(heatmaps, original_image_sizes, query):
     t_deletion = time()
     n, height, width, channels = heatmaps.shape
@@ -191,7 +186,53 @@ def reshape_to_bigger_features(fatures_query_multilayer):
     
 
 class query_finder():
-    def search_query_multilayer(self, params, query_class, query_instance):
+    def get_query(self, params, query_class, query_instance):
+        query = imread(params.query_path + '/' + query_class + '/' + query_instance)[:,:,:3]/255
+
+
+        #Expand dims to batch
+        query = tf.expand_dims(query, axis=0)
+
+        print('query final shape:', query.shape)
+        number_of_queries, height_feat_query, width_feat_query, channels_feat_query = query.shape
+        #plt.imshow(query[0,:,:,0])
+
+        '''
+        #Resize big queries
+        while width_feat_query>400 or height_feat_query>400:
+            query = tf.image.resize(query, [int(height_feat_query*0.75), int(width_feat_query*0.75)], preserve_aspect_ratio = True)
+            number_of_queries, height_feat_query, width_feat_query, channels_feat_query = query.shape
+            print('query_shape downsized:', height_feat_query, width_feat_query, channels_feat_query)
+
+        #If query is too thin in one side
+        while width_feat_query<16 or height_feat_query<16:
+            query = tf.image.resize(query, [int(height_feat_query*1.25), int(width_feat_query*1.25)], preserve_aspect_ratio = True)
+            number_of_queries, height_feat_query, width_feat_query, channels_feat_query = query.shape
+            print('query_shape upsized:', height_feat_query, width_feat_query, channels_feat_query)
+        '''
+        
+        print('query final shape:', query.shape)
+        return query
+
+    def select_scale_query(self,params,query):
+        n, height, width, channels = query.shape()
+        model_dict = {}
+        model_dict['VGG16'] = ['block2_conv2','block3_conv3', 'block4_conv3']
+        model_dict['resnet'] = ['conv2_block3_out', 'conv3_block4_out', 'conv4_block6_out']
+
+        #small query
+        if height<150 or width<150:
+            size = 1
+        #medium query
+        elif height<400 or width<400:
+            size = 2
+        else:
+            size = 3
+
+
+
+
+    def search_query_multilayer(self, params, query_class, query_instance, query):
         #check if result already exists
 
             if not os.path.isfile('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)):
@@ -235,39 +276,6 @@ class query_finder():
                 classes_dictionary = train_images.class_info
                 query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==query_class][0]
                 
-
-                #load desired query
-                if query_instance=='random':
-                    instances = os.listdir(params.query_path+ '/' + query_class)
-                    num_instances = len(os.listdir(params.query_path+ '/' + query_class))
-                    instance = instances[np.random.randint(0,num_instances)]
-                    query = get_query(params.query_path, query_class, instance)
-                else:
-                    query = imread(params.query_path + '/' + query_class + '/' + query_instance)[:,:,:3]/255
-
-
-                #Expand dims to batch
-                query = tf.expand_dims(query, axis=0)
-
-                print('query final shape:', query.shape)
-                number_of_queries, height_feat_query, width_feat_query, channels_feat_query = query.shape
-                #plt.imshow(query[0,:,:,0])
-
-
-                #Resize big queries
-                while width_feat_query>400 or height_feat_query>400:
-                    query = tf.image.resize(query, [int(height_feat_query*0.75), int(width_feat_query*0.75)], preserve_aspect_ratio = True)
-                    number_of_queries, height_feat_query, width_feat_query, channels_feat_query = query.shape
-                    print('query_shape downsized:', height_feat_query, width_feat_query, channels_feat_query)
-
-                #If query is too thin in one side
-                while width_feat_query<16 or height_feat_query<16:
-                    query = tf.image.resize(query, [int(height_feat_query*1.25), int(width_feat_query*1.25)], preserve_aspect_ratio = True)
-                    number_of_queries, height_feat_query, width_feat_query, channels_feat_query = query.shape
-                    print('query_shape upsized:', height_feat_query, width_feat_query, channels_feat_query)
-                
-                print('query final shape:', query.shape)
-
               
 
                 #base model
@@ -355,15 +363,15 @@ class query_finder():
                 #Resize big queries
                 height_feat_query, width_feat_query, channels_feat_query = final_query_features.shape
 
-
+                '''
                 while width_feat_query>40 or height_feat_query>40:
                     final_query_features = tf.image.resize(final_query_features, [int(height_feat_query*0.75), int(width_feat_query*0.75)], preserve_aspect_ratio = True)
                     height_feat_query, width_feat_query, channels_feat_query = final_query_features.shape
                     print('query_shape resized:', height_feat_query, width_feat_query, channels_feat_query)
+                '''
 
                 print('testing L2 normalization for query (2nd normalization):', np.sum(np.power(final_query_features[0,0,:],2)))
                 
-
                 #Casting ino float32 dtype
                 final_query_features = tf.dtypes.cast(final_query_features, tf.float32)
 
