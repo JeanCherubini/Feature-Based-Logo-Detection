@@ -215,20 +215,23 @@ class query_finder():
         return query
 
     def select_scale_query(self,params,query):
-        n, height, width, channels = query.shape()
+        n, height, width, channels = query.shape
         model_dict = {}
         model_dict['VGG16'] = ['block2_conv2','block3_conv3', 'block4_conv3']
         model_dict['resnet'] = ['conv2_block3_out', 'conv3_block4_out', 'conv4_block6_out']
 
         #small query
-        if height<150 or width<150:
+        if height<=100 or width<=100:
             size = 1
         #medium query
-        elif height<400 or width<400:
+        elif height>100 or width>100:
             size = 2
         else:
-            size = 3
-        return
+            size = 2
+
+        layer_to_use = model_dict[params.model][size]
+
+        return layer_to_use
 
 
     def search_query(self, params, query_class, query_instance, query):
