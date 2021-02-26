@@ -121,4 +121,3 @@ if __name__ == '__main__' :
 
 
             time_file_scale_selection.close()
-            break
