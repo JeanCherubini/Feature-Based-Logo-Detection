@@ -218,7 +218,7 @@ class query_finder():
         n, height, width, channels = query.shape
         model_dict = {}
         model_dict['VGG16'] = ['block2_conv2','block3_conv3', 'block4_conv3']
-        model_dict['resnet'] = ['conv2_block3_out', 'conv3_block4_out', 'conv4_block6_out']
+        model_dict['resnet'] = ['conv1_relu','conv2_block3_out', 'conv3_block4_out', 'conv4_block6_out']
 
         #small query
         if height<=100 or width<=100:

@@ -75,6 +75,13 @@ if __name__ == '__main__' :
 
     finder = query_finder()
 
+    #create time results file
+    if not os.path.isfile('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_scale_selection', params.principal_components)):
+        #create folder for results
+        #Create file for times 
+        time_file_scale_selection = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_scale_selection', params.principal_components),'w')
+        time_file_scale_selection.close()
+
     for query_class in os.listdir(params.query_path):
         for query_instance in sorted(os.listdir(params.query_path + '/' + query_class)):
             query = finder.get_query(params, query_class, query_instance)
@@ -101,13 +108,6 @@ if __name__ == '__main__' :
             results_scale_selection = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_scale_selection', params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'w')
             for line in results_query.readlines():
                 results_scale_selection.write(line)
-
-            #get time results
-            if not os.path.isfile('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_scale_selection', params.principal_components)):
-                #create folder for results
-                #Create file for times 
-                time_file_scale_selection = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_scale_selection', params.principal_components),'w')
-                time_file_scale_selection.close()
 
             #Query times
             times_file = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'r')
