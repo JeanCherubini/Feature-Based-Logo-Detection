@@ -75,6 +75,20 @@ if __name__ == '__main__' :
 
     finder = query_finder()
 
+    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_scale_selection/'):
+                os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_scale_selection/')
+
+    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_scale_selection/' + str(params.principal_components)):
+        os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_scale_selection/' + str(params.principal_components))
+
+    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_scale_selection/' + str(params.principal_components) + '/detections'):
+        os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_scale_selection/' + str(params.principal_components) + '/detections')
+
+    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_scale_selection/' + str(params.principal_components) + '/detections/'+query_class):
+        os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_scale_selection/' + str(params.principal_components) + '/detections/'+query_class)
+
+
+
     #create time results file
     if not os.path.isfile('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_scale_selection', params.principal_components)):
         #create folder for results
@@ -93,17 +107,7 @@ if __name__ == '__main__' :
             #get detection results to resume in one folder
             results_query = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'r')
             
-            if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_scale_selection/'):
-                os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_scale_selection/')
-
-            if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_scale_selection/' + str(params.principal_components)):
-                os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_scale_selection/' + str(params.principal_components))
-
-            if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_scale_selection/' + str(params.principal_components) + '/detections'):
-                os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_scale_selection/' + str(params.principal_components) + '/detections')
-
-            if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_scale_selection/' + str(params.principal_components) + '/detections/'+query_class):
-                os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_scale_selection/' + str(params.principal_components) + '/detections/'+query_class)
+            
 
             results_scale_selection = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_scale_selection', params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'w')
             for line in results_query.readlines():
