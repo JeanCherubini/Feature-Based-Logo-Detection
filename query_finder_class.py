@@ -100,6 +100,7 @@ def get_p_maximum_values(image_ids, heatmaps, query, p, is_split):
             print('x_max',x_max, 'y_max',y_max,'bbox',x_del_begin, y_del_begin, height_query, width_query, 'value', maximum_value)
             plt.show()
             '''
+
             #deletion of box
             current_hmap[y_del_begin:y_del_begin + height_query, x_del_begin:x_del_begin + width_query] = 0
             if not is_split or is_split == 1:
@@ -183,7 +184,32 @@ def reshape_to_bigger_features(fatures_query_multilayer):
         #plt.imshow(fatures_query_multilayer_reshaped[layer][0,:,:,0])
     #plt.show()
     return fatures_query_multilayer_reshaped
+
+def center_tensors_in_canvas(tensors):
+    centered_tensors = {}
+
+    max_height = 0
+    max_width = 0
+    max_channels = 0
+    for transformation in tensors.keys():
+        height, width, channels = tensors[transformation].shape
+        max_channels += channels
+        if height >= max_height:
+            max_height=height
+        if width >= max_width:
+            max_width = width
     
+    for transformation in tensors.keys():
+        height, width, channels = tensors[transformation].shape
+        canvas = np.zeros([max_width,max_height,channels])
+        canvas[max_height-height:max_height+height, max_width-width:max_width+width, :] = tensors[transformation]
+
+        centered_tensors[transformation] = tf.convert_to_tensor(canvas, dtype=tf.float32)
+        #plt.imshow(centered_tensors[transformation][:,:,0])
+        #plt.show()
+
+    return centered_tensors
+
 
 class query_finder():
     def get_query(self, params, query_class, query_instance):
@@ -232,6 +258,26 @@ class query_finder():
         layer_to_use = model_dict[params.model][size]
 
         return layer_to_use
+
+    def get_query_transformations(self, query):
+        queries_transformated = {}
+        queries_transformated['original'] = query
+        queries_transformated['flipped'] = tf.image.flip_left_right(query)
+        #queries_transformated['center_cropped'] = tf.image.central_crop(query, central_fraction=0.5)
+        #queries_transformated['zoomed out'] = tf.image.resize(query, (query.shape[1]*0.5,query.shape[2]*0.5))
+        queries_transformated['rotated90'] = tf.image.rot90(query, k=1)
+        queries_transformated['rotated180'] = tf.image.rot90(query, k=2)
+        queries_transformated['rotated270'] = tf.image.rot90(query, k=3)
+
+
+        return queries_transformated
+
+
+
+
+
+
+
 
 
     def search_query(self, params, query_class, query_instance, query):
@@ -876,3 +922,308 @@ class query_finder():
                     print("No se encontraron puntos suficientes")
                     return 0
 
+    def search_query_transformations(self, params, query_class, query_instance, queries_transformated):
+            #check if result already exists
+
+                if(os.path.isfile('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png','').replace('.jpg','')))):
+                    print('Results for {} already exist!'.format(query_instance.replace('.png','').replace('.jpg','')))
+                    return 0
+
+                #if False:
+                #    print()
+
+                elif not os.path.isfile('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)):
+                    #create folder for results
+                    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name):
+                        os.mkdir(params.feat_savedir +'/' + params.dataset_name)
+
+                    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections'):
+                        os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections')
+
+                    #Create file for times 
+                    time_file = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
+                    time_file.close()
+
+                else: 
+                    #Open time file
+                    time_file = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'a')
+
+
+                    #creation of dataset like coco
+                    train_images = CocoLikeDataset()
+                    train_images.load_data(params.annotation_json, params.coco_images)
+                    train_images.prepare()
+
+                    classes_dictionary = train_images.class_info
+                    query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==query_class][0]
+
+
+                    #base model
+                    if(params.model == 'resnet'):
+                        model = tf.keras.applications.ResNet50(include_top=False, weights='imagenet', 
+                                                            input_tensor=None, input_shape=None, pooling=None, classes=1000)
+                    elif(params.model == 'VGG16'):
+                        model = tf.keras.applications.VGG16(include_top=False, weights='imagenet', input_tensor=None, input_shape=None,
+                                                            pooling=None, classes=1000, classifier_activation='softmax')
+                    else:
+                        raise Exception('Please use a valid model')
+
+                    #intermediate_model
+                    intermediate_model = get_layer_model(model, params.layer)
+
+                    if(params.principal_components>=1):
+                        #PCA model
+                        pca_dir = params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/' + str(params.principal_components) +'/PCA/'
+                        pca = pk.load(open(pca_dir + "/pca_{}.pkl".format(params.principal_components),'rb'))
+
+                    print('query_shape:', queries_transformated['original'].shape)
+                    number_of_queries, height_feat_query, width_feat_query, channels_feat_query = queries_transformated['original'].shape
+
+                    '''
+                    #Resize big queries
+                    while width_feat_query>400 or height_feat_query>400:
+                        query = tf.image.resize(query, [int(height_feat_query*0.75), int(width_feat_query*0.75)], preserve_aspect_ratio = True)
+                        number_of_queries, height_feat_query, width_feat_query, channels_feat_query = query.shape
+                        print('query_shape downsized:', height_feat_query, width_feat_query, channels_feat_query)
+
+                    #If query is too thin in one side
+                    while width_feat_query<64 or height_feat_query<64:
+                        query = tf.image.resize(query, [int(height_feat_query*1.25), int(width_feat_query*1.25)], preserve_aspect_ratio = True)
+                        number_of_queries, height_feat_query, width_feat_query, channels_feat_query = query.shape
+                        print('query_shape upsized:', height_feat_query, width_feat_query, channels_feat_query)
+                    '''
+
+                    #Query procesing
+                    query_transformations = queries_transformated.keys()
+                    queries_features_transformations = {}
+                    max_possible_values = {}
+
+
+                    for transformation in query_transformations:
+                        features_query = intermediate_model(queries_transformated[transformation], training=False)
+                        print('features_query shape:', features_query.shape)
+                        print('reduction scale: ', int(queries_transformated[transformation].shape[1]/features_query.shape[1]))
+
+                        #release memory deleting instantiation of models
+
+                        b, height, width, channels = features_query.shape
+
+                        #features reshaped for PCA transformation
+                        features_reshaped_PCA = tf.reshape(features_query, (b*height*width,channels))
+
+                        if(params.principal_components>=1):                
+                            #PCA
+                            pca_features = pca.transform(features_reshaped_PCA)
+                        else:
+                            pca_features = features_reshaped_PCA
+
+                        #l2_normalization        
+                        pca_features = tf.math.l2_normalize(pca_features, axis=-1, 
+                                        epsilon=1e-12, name=None)
+
+                        #Go back to original shape
+                        final_query_features = tf.reshape(pca_features, (height, width, pca_features.shape[-1]))
+
+                        #Casting ino float32 dtype
+                        final_query_features = tf.dtypes.cast(final_query_features, tf.float32)
+
+                        #Get maximum possible convolution value
+                        max_possible_values[transformation] =  tf.nn.convolution(tf.expand_dims(final_query_features,axis=0), tf.expand_dims(final_query_features,axis=-1), padding = 'VALID', strides=[1,1,1,1])
+                        
+                        #Save features in the corresponding transformation
+                        queries_features_transformations[transformation] = final_query_features
+                        
+
+                    del intermediate_model
+
+                    #put all features in a zeroes canvas
+                    queries_features_transformations_centered = center_tensors_in_canvas(queries_features_transformations)
+
+
+                    #stack all features as one vector
+                    for transformation in queries_features_transformations_centered.keys():
+                        try:
+                            queries_features_stacked = tf.concat([queries_features_stacked,tf.expand_dims(queries_features_transformations_centered[transformation],axis=-1)], axis=3)
+                        except:
+                            queries_features_stacked = tf.expand_dims(queries_features_transformations_centered[transformation], axis=-1)
+
+                    print('transformation queries stacked', queries_features_stacked.shape)
+                
+
+
+                    #image_features directory
+                    image_feat_savedir = params.feat_savedir + '/'+ params.dataset_name + '/' + params.model + '_' + params.layer + '/' + str(params.principal_components)
+
+                    #cant of batches on database
+                    files_in_features_dir = os.listdir(image_feat_savedir)
+                    cant_of_batches = 0
+                    for file_ in files_in_features_dir:
+                        if('features' in file_):
+                            cant_of_batches +=1
+
+
+
+
+                    t_inicio = time()
+
+
+                    print('queries_features_stacked',max_possible_values)
+                    p_points_transformation = {}
+                    #Search query in batches of images
+                    for batch_counter in range(cant_of_batches):
+                        try:
+                            print('Processing Batch: {0} for query {1}'.format(batch_counter, query_instance))
+                            t_batch = time()
+
+                            #load batch of features and the ids of the images 
+                            data = np.load(image_feat_savedir + '/features_{}.npy'.format(batch_counter), allow_pickle=True)
+                            #print('Time in loading data {}'.format(time()-t_batch))
+                            image_ids = data.item().get('image_ids')
+                            features = data.item().get('features')
+                            annotations = data.item().get('annotations')
+                            is_split = data.item().get('is_split')
+
+
+                            #list of original batch image sizes without padding
+                            original_image_sizes = train_images.load_image_batch(image_ids, params.model)['original_sizes']
+
+                            #shape of the batch with padding
+                            original_batches, original_height, original_width, original_channels = train_images.load_image_batch(image_ids, params.model)['padded_batch_size']
+
+                            t_conv = time()
+
+                            #Convolution of features of the batch and the query
+                            features = tf.convert_to_tensor(features)
+                            features = tf.dtypes.cast(features, tf.float32)
+
+                            #print('features shape:{0} \nquery_shape: {1}'.format(features.shape, final_query_features.shape))
+
+                            #convolution between feature batch of images and features of the query 
+                            heatmaps = tf.nn.convolution(features, queries_features_stacked, padding = 'SAME', strides=[1,1,1,1])
+                            print('heatmaps shape:', heatmaps.shape)
+
+                            counter = 0
+                            heatmaps_by_transformation = {}
+                            for transformation in queries_features_transformations_centered.keys():
+                                heatmaps_by_transformation[transformation] = tf.expand_dims(heatmaps[:,:,:,counter], axis=-1)
+                                counter+=1
+
+                            for transformation in heatmaps_by_transformation.keys():           
+                                #Normalization by max possible value
+                                heatmap_transformation = heatmaps_by_transformation[transformation]/max_possible_values[transformation][0][0][0]
+                                print('heatmap_transformation', heatmap_transformation.shape)
+                                #print('time on convolutions: {:.3f}'.format(time()-t_conv))
+
+                                
+
+                                #interpolation to original image shapes, halving the sizew if it is a split
+                                if not(is_split):
+                                    heatmap_transformation = tf.image.resize(heatmap_transformation, (original_height, original_width), method=tf.image.ResizeMethod.BICUBIC)
+                                if is_split:
+                                    heatmap_transformation = tf.image.resize(heatmap_transformation, (original_height, int(original_width/2)), method=tf.image.ResizeMethod.BICUBIC)
+
+                                print('heatmap_transformation', heatmap_transformation.shape)
+
+
+                                
+
+
+                                #Deletion of heatmap borders, for treating border abnormalities due to padding in the images
+                                heatmap_transformation = delete_border_values(heatmap_transformation, original_image_sizes, tf.squeeze(queries_transformated[transformation]))
+
+                                '''
+                                #Visualize heatmap
+                                for i in range(heatmap_transformation.shape[0]):
+                                    annotations_image = annotations[i]
+                                    annotation_labels = annotations_image[:,-1]
+                                    if query_class_num in annotation_labels:
+                                        contours = measure.find_contours(np.asarray(tf.squeeze(heatmap_transformation[i])), 0.8)
+                                        # Display the image and plot all contours found
+                                        fig, (ax,ax2) = plt.subplots(2,1)
+                                        ax.imshow(np.asarray(tf.squeeze(heatmap_transformation[i])),cmap='Greys_r')
+                                        img_load = train_images.load_image_batch(image_ids, params.model)['padded_images']
+                                        img_correct = img_load[i]/255
+                                        ax2.imshow(img_correct)
+                                        print(i)
+                                        for contour in contours:
+                                            ax.plot(contour[:, 1], contour[:, 0], linewidth=2)
+                                        ax.axis('image')
+                                        ax.set_xticks([])
+                                        ax.set_yticks([])
+                                        plt.show()
+                                        
+                                        
+                                        t_points=time()
+                                        #create db with all the maximum points found 
+                                        p_points = get_p_maximum_values(image_ids, heatmap_transformation, tf.squeeze(queries_transformated[transformation]), params.p, is_split)
+                                '''
+
+                                t_points=time()
+                                #create db with all the maximum points found 
+                                if(batch_counter == 0):
+                                    p_points_transformation[transformation] = get_p_maximum_values(image_ids, heatmap_transformation, tf.squeeze(queries_transformated[transformation]), params.p, is_split)
+                                else:
+                                    p_points_transformation[transformation] = np.concatenate( (p_points_transformation[transformation], get_p_maximum_values(image_ids, heatmap_transformation, tf.squeeze(queries_transformated[transformation]), params.p, is_split)) )
+
+                            print('Batch {0} processed in {1}'.format(batch_counter, time()-t_batch))
+                        except:
+                            print('Batch {} missing'.format(batch_counter))
+
+                        print(p_points_transformation)
+
+                        #if batch_counter==3:
+                        #    break
+
+                    t_procesamiento = time()-t_inicio
+                    time_file.write('{0}\t{1}\n'.format(query_instance, t_procesamiento))
+                    time_file.close()
+                    print('t_procesamiento', t_procesamiento)
+
+                    try:
+                        #Get top porcentaje of sorted id images and their detections         
+                        top_images_ids, top_images_detections = get_top_images(p_points_transformation,100,100)
+
+
+                        #create folder for results
+                        if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name):
+                            os.mkdir(params.feat_savedir +'/' + params.dataset_name)
+
+                        if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections'):
+                            os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections')
+
+                        if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections/'+query_class):
+                            os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections/'+query_class)
+
+                        results = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'w')
+                        #create figure to show query
+
+
+
+                        for id_ in top_images_ids:    
+
+                            #get detections for this image
+                            bounding_box, values = get_bounding_boxes([id_], top_images_detections, query)
+
+                            for j in range(len(bounding_box[id_])):
+                                x1, y1, height, width = bounding_box[id_][j]
+                                value = values[id_][j]
+                                if not ([x1, y1, height, width]==[0 ,0 , 0 ,0]):
+                                    results_text = '{0} {1} {2} {3} {4} {5:.3f} {6}\n'.format(id_, x1, y1, height, width, value,  query_class_num)
+                                    results.write(results_text)
+                            '''    
+                            for bbox in bounding_box[id_]:
+                                x1, y1, height, width = bbox
+                                if not ([x1, y1, height, width]==[0 ,0 , 0 ,0]):
+                                    results_text = '{0} {1} {2} {3} {4} {5}\n'.format(id_, x1, y1, height, width, query_class_num)
+                                    results.write(results_text)
+                            '''
+                        results.close()
+                        return 1
+                    except:
+                        if not(os.path.isfile('{0}/{1}/{2}/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components))):
+                            errors = open('{0}/{1}/{2}/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
+                            errors.close()
+                        errors = open('{0}/{1}/{2}/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'a')
+                        errors.write('Error finding detections for query class {} instance {}\n'.format(query_class, query_instance.replace('.png','').replace('.jpg','')))
+                        print("No se encontraron puntos suficientes")
+                        return 0
