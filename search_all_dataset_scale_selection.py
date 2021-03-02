@@ -85,12 +85,9 @@ if __name__ == '__main__' :
     if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_scale_selection/' + str(params.principal_components) + '/detections'):
         os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_scale_selection/' + str(params.principal_components) + '/detections')
 
-    #create time results file
-    if not os.path.isfile('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_scale_selection', params.principal_components)):
-        #create folder for results
-        #Create file for times 
-        time_file_scale_selection = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_scale_selection', params.principal_components),'w')
-        time_file_scale_selection.close()
+    
+    time_file_scale_selection = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_scale_selection', params.principal_components),'w')
+    time_file_scale_selection.close()
 
     for query_class in os.listdir(params.query_path):
         for query_instance in sorted(os.listdir(params.query_path + '/' + query_class)):
