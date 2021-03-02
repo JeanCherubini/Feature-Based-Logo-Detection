@@ -95,8 +95,7 @@ if __name__ == '__main__' :
                 query = finder.get_query(params, query_class, query_instance)
                 layer_to_use = finder.select_scale_query(params, query)
                 params.layer = layer_to_use
-                queries_transformated = finder.get_query_transformations(query)
-                finder.search_query(params, query_class, query_instance, queries_transformated)
+                finder.search_query(params, query_class, query_instance, query)
 
                 #get detection results to resume in one folder
                 results_query = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'r')
