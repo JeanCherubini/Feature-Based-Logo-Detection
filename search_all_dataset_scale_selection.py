@@ -93,34 +93,37 @@ if __name__ == '__main__' :
 
     for query_class in os.listdir(params.query_path):
         for query_instance in sorted(os.listdir(params.query_path + '/' + query_class)):
-            query = finder.get_query(params, query_class, query_instance)
-            layer_to_use = finder.select_scale_query(params, query)
-            params.layer = layer_to_use
-            print(params.layer)
-            finder.search_query(params, query_class, query_instance, query)
+            try:
+                query = finder.get_query(params, query_class, query_instance)
+                layer_to_use = finder.select_scale_query(params, query)
+                params.layer = layer_to_use
+                print(params.layer)
+                finder.search_query(params, query_class, query_instance, query)
 
-            #get detection results to resume in one folder
-            results_query = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'r')
-            
-            
+                #get detection results to resume in one folder
+                results_query = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'r')
+                
+                
 
-            if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_scale_selection/' + str(params.principal_components) + '/detections/'+query_class):
-                os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_scale_selection/' + str(params.principal_components) + '/detections/'+query_class)
+                if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_scale_selection/' + str(params.principal_components) + '/detections/'+query_class):
+                    os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_scale_selection/' + str(params.principal_components) + '/detections/'+query_class)
 
-            results_scale_selection = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_scale_selection', params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'w')
-            for line in results_query.readlines():
-                results_scale_selection.write(line)
+                results_scale_selection = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_scale_selection', params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'w')
+                for line in results_query.readlines():
+                    results_scale_selection.write(line)
 
-            #Query times
-            times_file = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'r')
-            time_file_scale_selection = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_scale_selection', params.principal_components),'a')
-
-
-            for line in times_file.readlines():
-                instance = line.split('\t')[0]
-                if instance == query_instance:
-                    time_file_scale_selection.write(params.layer + '\t' + line)
+                #Query times
+                times_file = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'r')
+                time_file_scale_selection = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_scale_selection', params.principal_components),'a')
 
 
-            time_file_scale_selection.close()
+                for line in times_file.readlines():
+                    instance = line.split('\t')[0]
+                    if instance == query_instance:
+                        time_file_scale_selection.write(params.layer + '\t' + line)
+
+
+                time_file_scale_selection.close()
+            except:
+                continue
             break
