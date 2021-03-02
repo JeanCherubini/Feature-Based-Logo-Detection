@@ -80,6 +80,7 @@ if __name__ == '__main__' :
             query = finder.get_query(params, query_class, query_instance)
             layer_to_use = finder.select_scale_query(params, query)
             params.layer = layer_to_use
+            print('layer_to_use: ', layer_to_use)
             queries_transformated = finder.get_query_transformations(query)
             finder.search_query_transformations(params, query_class, query_instance, queries_transformated)
             break
