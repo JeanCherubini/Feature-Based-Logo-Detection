@@ -145,9 +145,8 @@ def get_top_images(p_points, global_top_percentage, in_image_top_porcentage):
     return grouped_by_image_filtered_top.keys(), grouped_by_image_filtered_top
 
 
-def get_bounding_boxes(top_images_ids, top_images_detections, query):
+def get_bounding_boxes(top_images_ids, top_images_detections):
 
-    height_query, width_query,_= query.shape
     bboxes = {}
     values = {}
     
@@ -559,7 +558,7 @@ class query_finder():
                     for id_ in top_images_ids:    
 
                         #get detections for this image
-                        bounding_box, values = get_bounding_boxes([id_], top_images_detections, query)
+                        bounding_box, values = get_bounding_boxes([id_], top_images_detections)
 
                         for j in range(len(bounding_box[id_])):
                             x1, y1, height, width = bounding_box[id_][j]
@@ -916,7 +915,7 @@ class query_finder():
                     for id_ in top_images_ids:    
                         
                         #get detections for this image
-                        bounding_box, values = get_bounding_boxes([id_], top_images_detections, query)
+                        bounding_box, values = get_bounding_boxes([id_], top_images_detections)
                     
                         for j in range(len(bounding_box[id_])):
                             x1, y1, height, width = bounding_box[id_][j]
@@ -945,28 +944,25 @@ class query_finder():
     def search_query_transformations(self, params, query_class, query_instance, queries_transformated):
             #check if result already exists
 
-                if(os.path.isfile('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png','').replace('.jpg','')))):
+                if(os.path.isfile('{0}/{1}/{2}_transformations/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png','').replace('.jpg','')))):
                     print('Results for {} already exist!'.format(query_instance.replace('.png','').replace('.jpg','')))
                     return 0
 
                 #if False:
                 #    print()
 
-                elif not os.path.isfile('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)):
-                    #create folder for results
-                    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name):
-                        os.mkdir(params.feat_savedir +'/' + params.dataset_name)
-
-                    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections'):
-                        os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections')
+                elif not os.path.isfile('{0}/{1}/{2}_transformations/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)):
+                    
+                    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'_transformations/' + str(params.principal_components) + '/detections'):
+                        os.makedirs(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer +'_transformations/' + str(params.principal_components) + '/detections')
 
                     #Create file for times 
-                    time_file = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
+                    time_file = open('{0}/{1}/{2}_transformations/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
                     time_file.close()
 
                 else: 
                     #Open time file
-                    time_file = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'a')
+                    time_file = open('{0}/{1}/{2}_transformations/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'a')
 
 
                     #creation of dataset like coco
@@ -1088,7 +1084,7 @@ class query_finder():
 
 
                     print('queries_features_stacked',max_possible_values)
-                    p_points_transformation = {}
+                    p_points_transformations = {}
                     #Search query in batches of images
                     for batch_counter in range(cant_of_batches):
                         try:
@@ -1131,7 +1127,6 @@ class query_finder():
                             for transformation in heatmaps_by_transformation.keys():           
                                 #Normalization by max possible value
                                 heatmap_transformation = heatmaps_by_transformation[transformation]/max_possible_values[transformation][0][0][0]
-                                print('heatmap_transformation', heatmap_transformation.shape)
                                 #print('time on convolutions: {:.3f}'.format(time()-t_conv))
 
                                 
@@ -1141,8 +1136,6 @@ class query_finder():
                                     heatmap_transformation = tf.image.resize(heatmap_transformation, (original_height, original_width), method=tf.image.ResizeMethod.BICUBIC)
                                 if is_split:
                                     heatmap_transformation = tf.image.resize(heatmap_transformation, (original_height, int(original_width/2)), method=tf.image.ResizeMethod.BICUBIC)
-
-                                print('heatmap_transformation', heatmap_transformation.shape)
 
 
                                 
@@ -1181,47 +1174,99 @@ class query_finder():
                                 t_points=time()
                                 #create db with all the maximum points found
                                 
-                                if(batch_counter == 0 and transformation=='original'):
-                                    p_points_transformation = get_p_maximum_values(image_ids, heatmap_transformation, tf.squeeze(queries_transformated[transformation]), params.p, is_split)
+                                if(batch_counter == 0):
+                                    p_points_transformations[transformation] = get_p_maximum_values(image_ids, heatmap_transformation, tf.squeeze(queries_transformated[transformation]), params.p, is_split)
                                 else:
-                                    p_points_transformation = np.concatenate( (p_points_transformation, get_p_maximum_values(image_ids, heatmap_transformation, tf.squeeze(queries_transformated[transformation]), params.p, is_split)) )
-                                print(p_points_transformation)
+                                    p_points_transformations[transformation] = np.concatenate( (p_points_transformations[transformation], get_p_maximum_values(image_ids, heatmap_transformation, tf.squeeze(queries_transformated[transformation]), params.p, is_split)) )
+                            
+
+                                
+
+                            
                             print('Batch {0} processed in {1}'.format(batch_counter, time()-t_batch))
                         except:
                             print('Batch {} missing'.format(batch_counter))
 
-                        #if batch_counter==3:
+                        #if batch_counter==2:
                         #    break
+                        
+                    print('p_points_transformations[transformation]', p_points_transformations[transformation])
+
+
+
+                    top_images_ids_transformations = {}
+                    top_images_detections_transformations = {}
+                    for transformation in queries_features_transformations_centered.keys():
+                        try:
+                            top_images_ids, top_images_detections = get_top_images(p_points_transformations[transformation],100,100)
+                            top_images_ids_transformations[transformation] = top_images_ids
+                            top_images_detections_transformations[transformation] = top_images_detections
+                        except:
+                            continue
+
+                    #Eliminate similar/crossing bounding boxes
+                    for transformation_1 in queries_features_transformations_centered.keys():
+                        for transformation_2 in queries_features_transformations_centered.keys():
+                            if transformation_1 != transformation_2:
+                                for image_id_1 in top_images_detections_transformations[transformation_1]:
+                                    for image_id_2 in top_images_detections_transformations[transformation_2]:
+                                        if image_id_1 == image_id_2:
+                                            for obj_1 in top_images_detections_transformations[transformation_1][image_id_1]:
+                                                for obj_2 in top_images_detections_transformations[transformation_2][image_id_2]:
+                                                    bbx_1 = obj_1['bbox']
+                                                    value_1 = obj_1['value']
+                                                    bbx_2 = obj_2['bbox']
+                                                    value_2 = obj_2['value']
+                                                    IoU = bb_intersection_over_union(bbx_1,bbx_2)
+                                                    if IoU>=0.5:
+                                                        value_to_eliminate = np.argmin([value_1,value_2])
+                                                        #print(bbx_1,value_1,bbx_2,value_2,IoU,value_to_eliminate)
+                                                        try:
+                                                            if value_to_eliminate == 0:
+                                                                top_images_detections_transformations[transformation_1][image_id_1].remove(obj_1)
+                                                            elif value_to_eliminate == 1:
+                                                                top_images_detections_transformations[transformation_2][image_id_2].remove(obj_2)
+                                                        except:
+                                                            print('element already deleted')
+
+                    p_points = []
+                    for transformation in queries_features_transformations_centered.keys():
+                                for image_id in top_images_detections_transformations[transformation]:
+                                            for obj in top_images_detections_transformations[transformation][image_id]:
+                                                obj['image_id'] = image_id
+                                                if p_points==[]:
+                                                    p_points = [obj]
+                                                else:
+                                                    p_points.append(obj)
+                    top_images_ids_final, top_images_detections_final = get_top_images(p_points,100,100)
+
 
                     t_procesamiento = time()-t_inicio
                     time_file.write('{0}\t{1}\n'.format(query_instance, t_procesamiento))
                     time_file.close()
                     print('t_procesamiento', t_procesamiento)
 
+
                     try:
-                        #Get top porcentaje of sorted id images and their detections         
-                        top_images_ids, top_images_detections = get_top_images(p_points_transformation,100,100)
-
-
                         #create folder for results
                         if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name):
                             os.mkdir(params.feat_savedir +'/' + params.dataset_name)
 
-                        if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections'):
-                            os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections')
+                        if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'_transformations/' + str(params.principal_components) + '/detections'):
+                            os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer +'_transformations/' + str(params.principal_components) + '/detections')
 
-                        if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections/'+query_class):
-                            os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections/'+query_class)
+                        if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'_transformations/' + str(params.principal_components) + '/detections/'+query_class):
+                            os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'_transformations/' + str(params.principal_components) + '/detections/'+query_class)
 
-                        results = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'w')
+                        results = open('{0}/{1}/{2}_transformations/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'w')
                         #create figure to show query
 
 
 
-                        for id_ in top_images_ids:    
+                        for id_ in top_images_ids_final:    
 
                             #get detections for this image
-                            bounding_box, values = get_bounding_boxes([id_], top_images_detections, query)
+                            bounding_box, values = get_bounding_boxes([id_], top_images_detections_final)
 
                             for j in range(len(bounding_box[id_])):
                                 x1, y1, height, width = bounding_box[id_][j]
@@ -1239,10 +1284,10 @@ class query_finder():
                         results.close()
                         return 1
                     except:
-                        if not(os.path.isfile('{0}/{1}/{2}/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components))):
-                            errors = open('{0}/{1}/{2}/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
+                        if not(os.path.isfile('{0}/{1}/{2}_transformations/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components))):
+                            errors = open('{0}/{1}/{2}_transformations/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
                             errors.close()
-                        errors = open('{0}/{1}/{2}/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'a')
+                        errors = open('{0}/{1}/{2}_transformations/{3}/detections/error_detection.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'a')
                         errors.write('Error finding detections for query class {} instance {}\n'.format(query_class, query_instance.replace('.png','').replace('.jpg','')))
                         print("No se encontraron puntos suficientes")
                         return 0
