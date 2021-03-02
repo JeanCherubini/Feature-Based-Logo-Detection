@@ -210,6 +210,26 @@ def center_tensors_in_canvas(tensors):
 
     return centered_tensors
 
+#Fuction modified from https://www.pyimagesearch.com/2016/11/07/intersection-over-union-iou-for-object-detection/
+def bb_intersection_over_union(boxA, boxB):
+	# determine the (x, y)-coordinates of the intersection rectangle
+	xA = max(boxA[0], boxB[0])
+	yA = max(boxA[1], boxB[1])
+	xB = min(boxA[0] + boxA[2]-1, boxB[0] + boxB[2]-1)
+	yB = min(boxA[1] + boxA[3]-1, boxB[1] + boxB[3]-1)
+	# compute the area of intersection rectangle
+	interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
+	# compute the area of both the prediction and ground-truth
+	# rectangles
+	boxAArea = (boxA[2]) * (boxA[3])
+	boxBArea = (boxB[2]) * (boxB[3])
+	# compute the intersection over union by taking the intersection
+	# area and dividing it by the sum of prediction + ground-truth
+	# areas - the interesection area
+	iou = interArea / float(boxAArea + boxBArea - interArea)
+	# return the intersection over union value
+	return iou
+
 
 class query_finder():
     def get_query(self, params, query_class, query_instance):
@@ -1159,17 +1179,16 @@ class query_finder():
                                 '''
 
                                 t_points=time()
-                                #create db with all the maximum points found 
-                                if(batch_counter == 0):
-                                    p_points_transformation[transformation] = get_p_maximum_values(image_ids, heatmap_transformation, tf.squeeze(queries_transformated[transformation]), params.p, is_split)
+                                #create db with all the maximum points found
+                                
+                                if(batch_counter == 0 and transformation=='original'):
+                                    p_points_transformation = get_p_maximum_values(image_ids, heatmap_transformation, tf.squeeze(queries_transformated[transformation]), params.p, is_split)
                                 else:
-                                    p_points_transformation[transformation] = np.concatenate( (p_points_transformation[transformation], get_p_maximum_values(image_ids, heatmap_transformation, tf.squeeze(queries_transformated[transformation]), params.p, is_split)) )
-
+                                    p_points_transformation = np.concatenate( (p_points_transformation, get_p_maximum_values(image_ids, heatmap_transformation, tf.squeeze(queries_transformated[transformation]), params.p, is_split)) )
+                                print(p_points_transformation)
                             print('Batch {0} processed in {1}'.format(batch_counter, time()-t_batch))
                         except:
                             print('Batch {} missing'.format(batch_counter))
-
-                        print(p_points_transformation)
 
                         #if batch_counter==3:
                         #    break
