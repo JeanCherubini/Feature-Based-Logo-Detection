@@ -85,8 +85,6 @@ if __name__ == '__main__' :
 
     for query_class in os.listdir(params.query_path):
         for query_instance in sorted(os.listdir(params.query_path + '/' + query_class)):
-            if query_instance!='884.jpg':
-                break
             query = finder.get_query(params, query_class, query_instance)
             layer_to_use = finder.select_scale_query(params, query)
             params.layer = layer_to_use
