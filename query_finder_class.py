@@ -204,8 +204,8 @@ def center_tensors_in_canvas(tensors):
         canvas[0:height, 0:width, :] = tensors[transformation]
 
         centered_tensors[transformation] = tf.convert_to_tensor(canvas, dtype=tf.float32)
-        plt.imshow(centered_tensors[transformation][:,:,0])
-        plt.show()
+        #plt.imshow(centered_tensors[transformation][:,:,0])
+        #plt.show()
 
     return centered_tensors
 
