@@ -99,7 +99,7 @@ if __name__ == '__main__' :
                 queries_transformated = finder.get_query_transformations(query)
                 finder.search_query_transformations(params, query_class, query_instance, queries_transformated)
                 #get detection results to resume in one folder
-                results_query = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'r')
+                results_query = open('{0}/{1}/{2}_transformations/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'r')
                 
                 
 
@@ -111,7 +111,7 @@ if __name__ == '__main__' :
                     results_transformations.write(line)
 
                 #Query times
-                times_file = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'r')
+                times_file = open('{0}/{1}/{2}_transformations/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'r')
                 time_file_transformations = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_transformations', params.principal_components),'a')
 
 
