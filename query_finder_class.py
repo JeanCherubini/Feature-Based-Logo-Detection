@@ -197,15 +197,27 @@ def center_tensors_in_canvas(tensors):
             max_height=height
         if width >= max_width:
             max_width = width
-    
+
+
     for transformation in tensors.keys():
         height, width, channels = tensors[transformation].shape
         canvas = np.zeros([max_width,max_height,channels])
-        canvas[max_height-height:max_height, max_width-width:max_width, :] = tensors[transformation]
+
+        half_height = int(height/2)
+        half_width = int(width/2)
+
+        middle_height = int(max_height/2)
+        middle_width = int(max_width/2)
+
+        start_height = middle_height-half_height
+        start_width = middle_width-half_width
+
+
+        canvas[start_height:start_height+height, start_width:start_width+width, : ] = tensors[transformation]
 
         centered_tensors[transformation] = tf.convert_to_tensor(canvas, dtype=tf.float32)
-        #plt.imshow(centered_tensors[transformation][:,:,0])
-        #plt.show()
+        plt.imshow(centered_tensors[transformation][:,:,0])
+        plt.show()
 
     return centered_tensors
 
