@@ -201,11 +201,11 @@ def center_tensors_in_canvas(tensors):
     for transformation in tensors.keys():
         height, width, channels = tensors[transformation].shape
         canvas = np.zeros([max_width,max_height,channels])
-        canvas[max_height-height:max_height+height, max_width-width:max_width+width, :] = tensors[transformation]
+        canvas[0:height, 0:width, :] = tensors[transformation]
 
         centered_tensors[transformation] = tf.convert_to_tensor(canvas, dtype=tf.float32)
-        #plt.imshow(centered_tensors[transformation][:,:,0])
-        #plt.show()
+        plt.imshow(centered_tensors[transformation][:,:,0])
+        plt.show()
 
     return centered_tensors
 
