@@ -201,7 +201,7 @@ def center_tensors_in_canvas(tensors):
     for transformation in tensors.keys():
         height, width, channels = tensors[transformation].shape
         canvas = np.zeros([max_width,max_height,channels])
-        canvas[0:height, 0:width, :] = tensors[transformation]
+        canvas[max_height-height:max_height, max_width-width:max_width, :] = tensors[transformation]
 
         centered_tensors[transformation] = tf.convert_to_tensor(canvas, dtype=tf.float32)
         #plt.imshow(centered_tensors[transformation][:,:,0])
@@ -311,11 +311,8 @@ class query_finder():
 
             elif not os.path.isfile('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)):
                 #create folder for results
-                if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name):
-                    os.mkdir(params.feat_savedir +'/' + params.dataset_name)
-
                 if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections'):
-                    os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections')
+                    os.makedirs(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections')
 
                 #Create file for times 
                 time_file = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
@@ -541,14 +538,8 @@ class query_finder():
 
 
                     #create folder for results
-                    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name):
-                        os.mkdir(params.feat_savedir +'/' + params.dataset_name)
-
-                    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections'):
-                        os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections')
-
                     if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections/'+query_class):
-                        os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections/'+query_class)
+                        os.makedirs(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections/'+query_class)
 
                     results = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'w')
                     #create figure to show query
@@ -590,19 +581,9 @@ class query_finder():
         #check if result already exists
 
             if not os.path.isfile('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)):
-                #create folder for results
-                if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name):
-                    os.mkdir(params.feat_savedir +'/' + params.dataset_name)
-
-                if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer):
-                    os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer)
-
-                if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components)):
-                    os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components))
-            
-
+                #create folder for results        
                 if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections'):
-                    os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections')
+                    os.makedirs(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections')
             
                 #Create file for times 
                 time_file = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),'w')
@@ -898,14 +879,8 @@ class query_finder():
 
                     
                     #create folder for results
-                    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name):
-                        os.mkdir(params.feat_savedir +'/' + params.dataset_name)
-
-                    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections'):
-                        os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections')
-
                     if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections/'+query_class):
-                        os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections/'+query_class)
+                        os.makedirs(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'/' + str(params.principal_components) + '/detections/' +query_class)
 
                     results = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'w')
                     #create figure to show query
@@ -1249,14 +1224,8 @@ class query_finder():
 
                     try:
                         #create folder for results
-                        if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name):
-                            os.mkdir(params.feat_savedir +'/' + params.dataset_name)
-
-                        if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'_transformations/' + str(params.principal_components) + '/detections'):
-                            os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer +'_transformations/' + str(params.principal_components) + '/detections')
-
                         if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'_transformations/' + str(params.principal_components) + '/detections/'+query_class):
-                            os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'_transformations/' + str(params.principal_components) + '/detections/'+query_class)
+                            os.makedirs(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer +'_transformations/' + str(params.principal_components) + '/detections/'+query_class)
 
                         results = open('{0}/{1}/{2}_transformations/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'w')
                         #create figure to show query

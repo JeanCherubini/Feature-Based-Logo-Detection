@@ -71,24 +71,21 @@ def split_image(image):
         
 class feature_getter_class():
     def get_features(self, params):
-        if not os.path.isdir(params.feat_savedir):
-            os.mkdir(params.feat_savedir)
+
 
         if not os.path.isdir(params.feat_savedir+'/'+params.dataset_name):
-            os.mkdir(params.feat_savedir+'/'+params.dataset_name)
+            os.makedirs(params.feat_savedir+'/'+params.dataset_name)
         
         
         features_path = params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/' + str(params.principal_components)
-        if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/'):
-            os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/') 
-        if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/'):
-            os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '/') 
+
+        #Create features path
         if not os.path.isdir(features_path):
-            os.mkdir(features_path) 
+            os.makedirs(features_path) 
 
         pca_path = features_path + '/PCA/' 
         if not os.path.isdir(pca_path):
-            os.mkdir(pca_path)
+            os.makedirs(pca_path)
 
         # GPU OPTIONS
         gpus = tf.config.experimental.list_physical_devices('GPU')

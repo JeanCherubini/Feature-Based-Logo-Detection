@@ -19,11 +19,11 @@ def create_instances_file(images_pool_dir, queries_dir, annotations_file):
     parent_dir = Path(images_pool_dir).parent
     annotations_folder = '{0}/annotations/'.format(parent_dir)
     if not os.path.isdir(annotations_folder):
-        os.mkdir(annotations_folder)
+        os.makedirs(annotations_folder)
 
     images_folder = '{0}/images/'.format(parent_dir)
     if not os.path.isdir(images_folder):
-        os.mkdir(images_folder)
+        os.makedirs(images_folder)
 
 
     print(images_folder)

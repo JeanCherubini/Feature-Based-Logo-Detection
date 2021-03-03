@@ -76,14 +76,8 @@ if __name__ == '__main__' :
 
     finder = query_finder()
 
-    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_transformations/'):
-                os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_transformations/')
-
-    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_transformations/' + str(params.principal_components)):
-        os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_transformations/' + str(params.principal_components))
-
     if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_transformations/' + str(params.principal_components) + '/detections'):
-        os.mkdir(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_transformations/' + str(params.principal_components) + '/detections')
+        os.makedirs(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_transformations/' + str(params.principal_components) + '/detections')
 
     
     time_file_transformations = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_transformations', params.principal_components),'w')
@@ -91,6 +85,8 @@ if __name__ == '__main__' :
 
     for query_class in os.listdir(params.query_path):
         for query_instance in sorted(os.listdir(params.query_path + '/' + query_class)):
+            if query_instance!='884.jpg':
+                break
             query = finder.get_query(params, query_class, query_instance)
             layer_to_use = finder.select_scale_query(params, query)
             params.layer = layer_to_use
@@ -103,7 +99,7 @@ if __name__ == '__main__' :
             
 
             if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_transformations/' + str(params.principal_components) + '/detections/'+query_class):
-                os.mkdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_transformations/' + str(params.principal_components) + '/detections/'+query_class)
+                os.makedirs(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_transformations/' + str(params.principal_components) + '/detections/'+query_class)
 
             results_transformations = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_transformations', params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')),'w')
             for line in results_query.readlines():

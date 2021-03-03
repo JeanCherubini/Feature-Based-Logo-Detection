@@ -171,13 +171,9 @@ class AP_calculator_class():
         #load desired query results
         query_results = open('{0}/{1}/{2}/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')), 'r')
 
-        #create ordered detections folder
-        if not os.path.isdir('{0}/{1}/{2}/{3}/detections_ordered'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)):
-            os.mkdir('{0}/{1}/{2}/{3}/detections_ordered'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components))
-
-        #create ordered detections class folder
+        #create ordered detections and class folders
         if not os.path.isdir('{0}/{1}/{2}/{3}/detections_ordered/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class)):
-            os.mkdir('{0}/{1}/{2}/{3}/detections_ordered/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class))
+            os.makedirs('{0}/{1}/{2}/{3}/detections_ordered/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class))
         
         #create ordered_results file
         query_results_ordered = open('{0}/{1}/{2}/{3}/detections_ordered/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,  query_class, query_instance.replace('.png','').replace('.jpg','')), 'w')
@@ -255,13 +251,9 @@ class AP_calculator_class():
 
         multiple_ious = [0.05 , 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95]
         APS = {}
-
-
-        if not os.path.isdir('{0}/{1}/{2}/{3}/AP'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)):
-            os.mkdir('{0}/{1}/{2}/{3}/AP'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components))
         
         if not os.path.isdir('{0}/{1}/{2}/{3}/AP/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class)):
-            os.mkdir('{0}/{1}/{2}/{3}/AP/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class))
+            os.makedirs('{0}/{1}/{2}/{3}/AP/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class))
         
         file_AP = open('{0}/{1}/{2}/{3}/AP/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer,params.principal_components , query_class, query_instance.replace('.png', '').replace('.jpg','')), 'w')
 
@@ -295,15 +287,9 @@ class AP_calculator_class():
 
         #create figure to show query
         #plt.figure()
-        #plt.imshow(query)
-        if not os.path.isdir('{0}/{1}/{2}/{3}/results'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)):
-            os.mkdir('{0}/{1}/{2}/{3}/results'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components))
-
+        #plt.imshow(query)        
         if not os.path.isdir('{0}/{1}/{2}/{3}/results/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class)):
-            os.mkdir('{0}/{1}/{2}/{3}/results/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer,params.principal_components,  query_class))
-        
-        if not os.path.isdir('{0}/{1}/{2}//{3}/results/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class)):
-            os.mkdir('{0}/{1}/{2}/{3}/results/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class))
+            os.makedirs('{0}/{1}/{2}/{3}/results/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class))
         
         counter=0
         for line in query_results_ordered.readlines():
