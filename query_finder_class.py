@@ -944,7 +944,7 @@ class query_finder():
     def search_query_transformations(self, params, query_class, query_instance, queries_transformated):
             #check if result already exists
 
-                if(os.path.isfile('{0}/{1}/{2}_transformations/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer +'_transformations/', params.principal_components, query_class, query_instance.replace('.png','').replace('.jpg','')))):
+                if(os.path.isfile('{0}/{1}/{2}_transformations/{3}/detections/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png','').replace('.jpg','')))):
                     print('Results for {} already exist!'.format(query_instance.replace('.png','').replace('.jpg','')))
                     return 0
 
