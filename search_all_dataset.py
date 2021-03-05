@@ -58,6 +58,8 @@ if __name__ == '__main__' :
     'block1_conv2, block2_conv2, block3_conv3, block4_conv3, block5_conv3'), type=str, default='block3_conv3') 
     parser.add_argument('-p', help='max points collected from each heatmap', type=int, default=15)
     parser.add_argument('-cfg', help='config file with paths', type=str)
+    parser.add_argument('-all', help='search all dataset queries or only one of them per class', type=int, default=0)
+
 
     
     params = parser.parse_args()
@@ -82,5 +84,6 @@ if __name__ == '__main__' :
                 finder.search_query(params, query_class, query_instance, query)
             except:
                 continue
-            break
+            if not params.all:
+                break
             

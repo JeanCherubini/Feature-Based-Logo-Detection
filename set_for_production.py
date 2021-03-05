@@ -45,6 +45,7 @@ def create_instances_file(images_pool_dir, queries_dir, annotations_file):
         for image in images_list:
 
             path_to_img = '{0}/{1}'.format(images_pool_dir, image)
+            print(path_to_img)
 
             #Obtener propiedades de la imagen
             img = mpimg.imread(path_to_img)
@@ -87,6 +88,10 @@ def create_instances_file(images_pool_dir, queries_dir, annotations_file):
 
 images_dir = '/home/jeancherubini/Downloads/isotonicas/mapa'
 queries_dir = '/home/jeancherubini/Downloads/isotonicas/queries'  
+
+#images_dir = '/mnt/BE6CA2E26CA294A5/Datasets/TopLogo10/pool_jpg/'
+#queries_dir = '/mnt/BE6CA2E26CA294A5/Datasets/TopLogo10/queries/'  
+
 
 create_instances_file(images_dir, queries_dir, '')
 

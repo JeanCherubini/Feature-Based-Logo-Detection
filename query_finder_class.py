@@ -81,7 +81,6 @@ def get_p_maximum_values(image_ids, heatmaps, query, p, is_split):
             x_del_begin = x_max - x_deletion_query
             
             y_del_begin = y_max - y_deletion_query
-
             '''
             #Show points rescued
             fig, axs = plt.subplots(1, 1, sharey=False, figsize=(25,15))
@@ -294,13 +293,14 @@ class query_finder():
         queries_transformated = {}
         queries_transformated['original'] = query
         queries_transformated['flipped'] = tf.image.flip_left_right(query)
-        #queries_transformated['center_cropped'] = tf.image.central_crop(query, central_fraction=0.5)
-        #queries_transformated['zoomed out'] = tf.image.resize(query, (query.shape[1]*0.5,query.shape[2]*0.5))
+        #Bigger query
+        queries_transformated['center_cropped'] = tf.image.resize(tf.image.central_crop(query, central_fraction=0.5),(query.shape[1],query.shape[2]))
+        #Smaller query
+        queries_transformated['zoomed out'] = tf.image.resize(query, (int(query.shape[1]/2),int(query.shape[2]/2)))
         queries_transformated['rotated90'] = tf.image.rot90(query, k=1)
         queries_transformated['rotated180'] = tf.image.rot90(query, k=2)
         queries_transformated['rotated270'] = tf.image.rot90(query, k=3)
-
-
+        
         return queries_transformated
 
 
@@ -502,7 +502,7 @@ class query_finder():
                                 contours = measure.find_contours(np.asarray(tf.squeeze(heatmaps[i])), 0.8)
                                 # Display the image and plot all contours found
                                 fig, (ax,ax2) = plt.subplots(2,1)
-                                ax.imshow(np.asarray(tf.squeeze(heatmaps[i])),cmap='Greys_r')
+                                ax.imshow(np.asarray(tf.squeeze(heatmaps[i])))
                                 img_load = train_images.load_image_batch(image_ids, params.model)['padded_images']
                                 img_correct = img_load[i]/255
                                 ax2.imshow(img_correct)
@@ -512,16 +512,22 @@ class query_finder():
                                 ax.axis('image')
                                 ax.set_xticks([])
                                 ax.set_yticks([])
+                                
+                                plt.figure()
+                                plt.imshow(tf.squeeze(heatmaps[i]))
+                                plt.axis('off')
+
+                                plt.figure()
+                                plt.imshow(img_correct)
+                                plt.axis('off')
+
                                 plt.show()
                                 
                                 
                                 t_points=time()
                                 #create db with all the maximum points found 
-                                p_points = get_p_maximum_values(image_ids, heatmaps, query, params.p)
-                        '''  
-
-
-
+                                p_points = get_p_maximum_values(image_ids, heatmaps, query, params.p, is_split)
+                        '''
                         t_points=time()
                         #create db with all the maximum points found 
                         if(batch_counter == 0):
@@ -835,7 +841,7 @@ class query_finder():
                                 contours = measure.find_contours(np.asarray(tf.squeeze(heatmaps[i])), 0.8)
                                 # Display the image and plot all contours found
                                 fig, (ax,ax2) = plt.subplots(2,1)
-                                ax.imshow(np.asarray(tf.squeeze(heatmaps[i])),cmap='Greys_r')
+                                ax.imshow(np.asarray(tf.squeeze(heatmaps[i])))
                                 img_load = train_images.load_image_batch(image_ids, params.model)['padded_images']
                                 img_correct = img_load[i]/255
                                 ax2.imshow(img_correct)
@@ -1140,7 +1146,7 @@ class query_finder():
                                         contours = measure.find_contours(np.asarray(tf.squeeze(heatmap_transformation[i])), 0.8)
                                         # Display the image and plot all contours found
                                         fig, (ax,ax2) = plt.subplots(2,1)
-                                        ax.imshow(np.asarray(tf.squeeze(heatmap_transformation[i])),cmap='Greys_r')
+                                        ax.imshow(np.asarray(tf.squeeze(heatmap_transformation[i])))
                                         img_load = train_images.load_image_batch(image_ids, params.model)['padded_images']
                                         img_correct = img_load[i]/255
                                         ax2.imshow(img_correct)

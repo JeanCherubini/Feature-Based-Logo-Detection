@@ -42,6 +42,7 @@ if __name__ == '__main__' :
 
     file_all_ap = open('{0}/{1}/{2}/{3}/AP/all_AP.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components), 'w')
     file_all_ap.write('class instance 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 \n')
+    file_all_ap.close()
     query_classes = os.listdir(params.query_path)
 
     AP_calculator = AP_calculator_class()
@@ -55,8 +56,10 @@ if __name__ == '__main__' :
                 AP_calculator.get_ordered_detections(params, query_class, query_instance)
                 AP_calculator.plt_top_detections(params, query_class, query_instance)
                 AP_calculator.calculate_query(params, query_class, query_instance)
-                file_ap = open('{0}/{1}/{2}/{3}/AP/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png', '').replace('.jpg','')), 'r')    
+                file_ap = open('{0}/{1}/{2}/{3}/AP/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png', '').replace('.jpg','')), 'r') 
+                file_all_ap = open('{0}/{1}/{2}/{3}/AP/all_AP.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components), 'a')
                 file_all_ap.write('{0} {1} {2}\n'.format(query_class, query_instance,file_ap.readline()))
+                file_all_ap.close()
                 file_ap.close()
                 
             except:
@@ -64,10 +67,9 @@ if __name__ == '__main__' :
     
 
     AP_calculator.create_all_dataset_detections_file(params)
-    if params.dataset_name == 'DocExplore':
-        AP_calculator.ps_task_transformation(params)
+    
 
-    file_all_ap.close()
+    #file_all_ap.close()
 
 
 
@@ -76,7 +78,8 @@ if __name__ == '__main__' :
         summary_file = open('{0}/{1}/summary_file.txt'.format(params.feat_savedir, params.dataset_name), 'w')
         summary_file.close()
 
-
+    #Build summary file
+    
     summary_file = open('{0}/{1}/summary_file.txt'.format(params.feat_savedir, params.dataset_name), 'a')
 
     file_all_AP_pandas = pd.read_csv('{0}/{1}/{2}/{3}/AP/all_AP.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components), sep=" ", header='infer', index_col=0, usecols=[0,11]).rename(columns={'0.5':'{0} ({1})'.format(params.model + '_' + params.layer, params.principal_components)})
@@ -89,4 +92,19 @@ if __name__ == '__main__' :
     summary_file.write('{0} ({1})\t{2:.4f}\t{3:.1f}\n'.format(params.model + '_' + params.layer, params.principal_components, mean, mean_time))
     summary_file.close()
 
-    
+    if params.dataset_name == 'DocExplore':
+        AP_calculator.ps_task_transformation(params)
+        os.chdir('{0}/{1}/evaluation_kit_v2'.format(params.feat_savedir, params.dataset_name))
+        os.system('./main --h')
+
+        os.system('./main --task ps --iou 0.5 --in_file {0} --out_file {1}'.format('{0}/{1}/{2}/{3}/detections/ps_for_DocExplore.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),
+        '{0}/{1}/{2}/{3}/detections/ps_for_DocExplore_results.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)
+        ))
+
+        os.system('./main --task im --iou 0.5 --in_file {0} --out_file {1}'.format(
+        '{0}/{1}/{2}/{3}/detections/im_for_DocExplore.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components),
+        '{0}/{1}/{2}/{3}/detections/im_for_DocExplore_results.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components)
+        ))
+
+        file_kit_result = pd.read_csv('{0}/{1}/{2}/{3}/detections/im_for_DocExplore_results.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components), skiprows=1, nrows=1, sep=',', names=['mAP', 'min AP', 'max AP']).replace('mAP=','').replace('min_AP=','').replace('max_AP=','')
+        print(file_kit_result)
