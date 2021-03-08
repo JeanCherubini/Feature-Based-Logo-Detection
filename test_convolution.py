@@ -14,7 +14,7 @@ print(query[:,:,0])
 query_reshaped = tf.expand_dims(query,-1)
 print(query_reshaped.shape)
 
-conv = tf.nn.convolution(image,query_reshaped, padding = 'SAME', strides=(1,1,1,1))
+conv = tf.nn.conv2d(image,query_reshaped, padding = 'SAME', strides=(1,1,1,1))
 
 print(conv.shape)
 print(conv)

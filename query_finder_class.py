@@ -58,7 +58,7 @@ def delete_border_values(heatmaps, original_image_sizes, query):
     #print('Time on deleting borders: {:.3f}'.format(time()-t_deletion))
     return heatmaps
 
-def get_p_maximum_values(image_ids, heatmaps, query, p, is_split):
+def get_p_maximum_values(image_ids, heatmaps, query, p, is_split, transformation):
     n, height, width, channels = heatmaps.shape
     height_query, width_query, _= query.shape
     x_deletion_query = int(width_query/2)
@@ -81,33 +81,125 @@ def get_p_maximum_values(image_ids, heatmaps, query, p, is_split):
             x_del_begin = x_max - x_deletion_query
             
             y_del_begin = y_max - y_deletion_query
-            '''
-            #Show points rescued
-            fig, axs = plt.subplots(1, 1, sharey=False, figsize=(25,15))
-            axs.imshow(current_hmap)
-            cntr = Rectangle((x_max, y_max), 3, 3, edgecolor='b', facecolor="r")
-            axs.add_patch(cntr)
-            rect = Rectangle((x_del_begin, y_del_begin), width_query, height_query, edgecolor='g', facecolor="none")
-            axs.add_patch(rect)
-
-
-            left_point = Rectangle((x_del_begin, y_del_begin), 2, 2, edgecolor='g', facecolor="r")
-            axs.add_patch(left_point)
-
-            right_point = Rectangle((x_del_begin + width_query, y_del_begin + height_query), 2, 2, edgecolor='g', facecolor="r")
-            axs.add_patch(right_point)
-            print('x_max',x_max, 'y_max',y_max,'bbox',x_del_begin, y_del_begin, height_query, width_query, 'value', maximum_value)
-            plt.show()
-            '''
-
-            #deletion of box
-            current_hmap[y_del_begin:y_del_begin + height_query, x_del_begin:x_del_begin + width_query] = 0
-            if not is_split or is_split == 1:
-                point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin, y_del_begin, height_query, width_query], 'value':maximum_value} 
             
-            #Add width of image to detection only if its split number 2
-            if is_split == 2:
-                point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin+width, y_del_begin, height_query, width_query], 'value':maximum_value} 
+
+
+            #Transformation that rescales the query to a smaller size
+            if transformation=='zoomed_out':
+                x_del_begin += int(x_deletion_query/2)
+                y_del_begin += int(y_deletion_query/2)
+
+                #deletion of box
+                current_hmap[y_del_begin:y_del_begin + int(height_query/2), x_del_begin:x_del_begin + int(width_query/2)] = 0
+                if not is_split or is_split == 1:
+                    point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin, y_del_begin, int(height_query/2), int(width_query/2)], 'value':maximum_value} 
+                    
+                    '''
+                    #Show points rescued
+                    fig, axs = plt.subplots(1, 1, sharey=False, figsize=(25,15))
+                    axs.imshow(current_hmap)
+                    cntr = Rectangle((x_max, y_max), 3, 3, edgecolor='b', facecolor="r")
+                    axs.add_patch(cntr)
+                    rect = Rectangle((x_del_begin, y_del_begin), int(width_query/2), int(height_query/2), edgecolor='g', facecolor="none")
+                    axs.add_patch(rect)
+
+
+                    left_point = Rectangle((x_del_begin, y_del_begin), 2, 2, edgecolor='g', facecolor="r")
+                    axs.add_patch(left_point)
+
+                    right_point = Rectangle((x_del_begin + int(width_query/2), y_del_begin + int(height_query/2)), 2, 2, edgecolor='g', facecolor="r")
+                    axs.add_patch(right_point)
+                    print('x_max',x_max, 'y_max',y_max,'bbox',x_del_begin, y_del_begin, int(height_query/2), int(width_query/2), 'value', maximum_value)
+                    plt.show()
+                    '''
+
+                    
+                    
+                
+                #Add width of image to detection only if its split number 2
+                if is_split == 2:
+                    point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin+width, y_del_begin, int(height_query/2), int(width_query/2)], 'value':maximum_value} 
+                
+            elif transformation=='center_cropped':
+                new_x_del_begin = x_del_begin - x_deletion_query
+                new_y_del_begin = y_del_begin - y_deletion_query
+                new_height_query = 2*height_query
+                new_width_query = 2*width_query
+
+
+                if new_x_del_begin < 0:
+                    new_x_del_begin = 0
+
+                if new_y_del_begin < 0:
+                    new_y_del_begin = 0
+
+
+                x_del_end = new_x_del_begin + new_width_query
+                y_del_end = new_y_del_begin + new_height_query
+                
+                if y_del_end>=height:
+                    new_height_query -= y_del_end-height
+                
+                if x_del_end>=width:
+                    new_width_query -= x_del_end-width
+               
+
+                #deletion of box
+                current_hmap[new_y_del_begin:y_del_end, new_x_del_begin:x_del_end] = 0
+                if not is_split or is_split == 1:
+                    point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[new_x_del_begin, new_y_del_begin, new_height_query, new_width_query], 'value':maximum_value} 
+                    
+                    '''
+                    #Show points rescued
+                    fig, axs = plt.subplots(1, 1, sharey=False, figsize=(25,15))
+                    axs.imshow(current_hmap)
+                    cntr = Rectangle((x_max, y_max), 3, 3, edgecolor='b', facecolor="r")
+                    axs.add_patch(cntr)
+                    rect = Rectangle((new_x_del_begin, new_y_del_begin), new_width_query, new_height_query, edgecolor='g', facecolor="none")
+                    axs.add_patch(rect)
+
+
+                    left_point = Rectangle((new_x_del_begin, new_y_del_begin), 2, 2, edgecolor='g', facecolor="r")
+                    axs.add_patch(left_point)
+
+                    right_point = Rectangle((new_x_del_begin + new_width_query, new_y_del_begin + new_height_query), 2, 2, edgecolor='g', facecolor="r")
+                    axs.add_patch(right_point)
+                    print('x_max',x_max, 'y_max',y_max,'bbox',new_x_del_begin, new_y_del_begin, new_height_query, new_width_query, 'value', maximum_value)
+                    plt.show()
+                    '''
+                
+                #Add width of image to detection only if its split number 2
+                if is_split == 2:
+                    point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[new_x_del_begin+width, new_y_del_begin, new_height_query, new_width_query], 'value':maximum_value}             
+            
+            else:
+                #deletion of box
+                current_hmap[y_del_begin:y_del_begin + height_query, x_del_begin:x_del_begin + width_query] = 0
+                if not is_split or is_split == 1:
+                    point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin, y_del_begin, height_query, width_query], 'value':maximum_value} 
+
+                '''
+                #Show points rescued
+                fig, axs = plt.subplots(1, 1, sharey=False, figsize=(25,15))
+                axs.imshow(current_hmap)
+                cntr = Rectangle((x_max, y_max), 3, 3, edgecolor='b', facecolor="r")
+                axs.add_patch(cntr)
+                rect = Rectangle((x_del_begin, y_del_begin), width_query, height_query, edgecolor='g', facecolor="none")
+                axs.add_patch(rect)
+
+
+                left_point = Rectangle((x_del_begin, y_del_begin), 2, 2, edgecolor='g', facecolor="r")
+                axs.add_patch(left_point)
+
+                right_point = Rectangle((x_del_begin + width_query, y_del_begin + height_query), 2, 2, edgecolor='g', facecolor="r")
+                axs.add_patch(right_point)
+                print('x_max',x_max, 'y_max',y_max,'bbox',x_del_begin, y_del_begin, height_query, width_query, 'value', maximum_value)
+                plt.show()
+                '''
+                
+                #Add width of image to detection only if its split number 2
+                if is_split == 2:
+                    point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin+width, y_del_begin, height_query, width_query], 'value':maximum_value} 
 
             p_points.append(point)
     
@@ -215,8 +307,8 @@ def center_tensors_in_canvas(tensors):
         canvas[start_height:start_height+height, start_width:start_width+width, : ] = tensors[transformation]
 
         centered_tensors[transformation] = tf.convert_to_tensor(canvas, dtype=tf.float32)
-        plt.imshow(centered_tensors[transformation][:,:,0])
-        plt.show()
+        #plt.imshow(centered_tensors[transformation][:,:,0])
+        #plt.show()
 
     return centered_tensors
 
@@ -296,7 +388,7 @@ class query_finder():
         #Bigger query
         queries_transformated['center_cropped'] = tf.image.resize(tf.image.central_crop(query, central_fraction=0.5),(query.shape[1],query.shape[2]))
         #Smaller query
-        queries_transformated['zoomed out'] = tf.image.resize(query, (int(query.shape[1]/2),int(query.shape[2]/2)))
+        queries_transformated['zoomed_out'] = tf.image.resize(query, (int(query.shape[1]/2),int(query.shape[2]/2)))
         queries_transformated['rotated90'] = tf.image.rot90(query, k=1)
         queries_transformated['rotated180'] = tf.image.rot90(query, k=2)
         queries_transformated['rotated270'] = tf.image.rot90(query, k=3)
@@ -531,9 +623,9 @@ class query_finder():
                         t_points=time()
                         #create db with all the maximum points found 
                         if(batch_counter == 0):
-                            p_points = get_p_maximum_values(image_ids, heatmaps, query, params.p, is_split)
+                            p_points = get_p_maximum_values(image_ids, heatmaps, query, params.p, is_split, 'original')
                         else:
-                            p_points = np.concatenate( (p_points, get_p_maximum_values(image_ids, heatmaps, query, params.p, is_split)) )
+                            p_points = np.concatenate( (p_points, get_p_maximum_values(image_ids, heatmaps, query, params.p, is_split, 'original')) )
                         #print('Time searching points: {}'.format(time()-t_points))
 
 
@@ -866,9 +958,9 @@ class query_finder():
                         t_points=time()
                         #create db with all the maximum points found 
                         if(batch_counter == 0):
-                            p_points = get_p_maximum_values(image_ids, heatmaps, query, params.p, is_split)
+                            p_points = get_p_maximum_values(image_ids, heatmaps, query, params.p, is_split, 'original')
                         else:
-                            p_points = np.concatenate( (p_points, get_p_maximum_values(image_ids, heatmaps, query, params.p, is_split)) )
+                            p_points = np.concatenate( (p_points, get_p_maximum_values(image_ids, heatmaps, query, params.p, is_split, 'original')) )
                         #print('Time searching points: {}'.format(time()-t_points))
                                                 
 
@@ -1160,18 +1252,17 @@ class query_finder():
                                         
                                         
                                         t_points=time()
-                                        #create db with all the maximum points found 
-                                        p_points = get_p_maximum_values(image_ids, heatmap_transformation, tf.squeeze(queries_transformated[transformation]), params.p, is_split)
+                                        #create db with all the maximum points found
+                                        print('transformation', transformation)
+                                        p_points = get_p_maximum_values(image_ids, heatmap_transformation, tf.squeeze(queries_transformated[transformation]), params.p, is_split, transformation)
                                 '''
-
                                 t_points=time()
-                                #create db with all the maximum points found
                                 
+                                #create db with all the maximum points found
                                 if(batch_counter == 0):
-                                    p_points_transformations[transformation] = get_p_maximum_values(image_ids, heatmap_transformation, tf.squeeze(queries_transformated[transformation]), params.p, is_split)
+                                    p_points_transformations[transformation] = get_p_maximum_values(image_ids, heatmap_transformation, tf.squeeze(queries_transformated[transformation]), params.p, is_split, transformation)
                                 else:
-                                    p_points_transformations[transformation] = np.concatenate( (p_points_transformations[transformation], get_p_maximum_values(image_ids, heatmap_transformation, tf.squeeze(queries_transformated[transformation]), params.p, is_split)) )
-                            
+                                    p_points_transformations[transformation] = np.concatenate( (p_points_transformations[transformation], get_p_maximum_values(image_ids, heatmap_transformation, tf.squeeze(queries_transformated[transformation]), params.p, is_split, transformation)) )
 
                                 
 
