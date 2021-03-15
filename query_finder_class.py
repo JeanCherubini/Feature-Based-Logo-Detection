@@ -353,28 +353,37 @@ class query_finder():
         queries_transformated = {}
         queries_transformated['original'] = query
         queries_transformated['flipped'] = tf.image.flip_left_right(query)
+        queries_transformated['rotated90'] = tf.image.rot90(query, k=1)
+        queries_transformated['rotated180'] = tf.image.rot90(query, k=2)
+        queries_transformated['rotated270'] = tf.image.rot90(query, k=3)
+
         #Bigger query
         queries_transformated['center_cropped'] = tf.image.resize(tf.image.central_crop(query, central_fraction=0.5),(query.shape[1],query.shape[2]))
         #Smaller query
         if(query_width>=100 and query_height>=100):
             queries_transformated['zoomed_out'] = tf.image.resize(query, (int(query.shape[1]/2),int(query.shape[2]/2)))
+            queries_transformated['zoomed_out_rotated90'] = tf.image.rot90(queries_transformated['zoomed_out'], k=1)
+            queries_transformated['zoomed_out_rotated180'] = tf.image.rot90(queries_transformated['zoomed_out'], k=2)
+            queries_transformated['zoomed_out_rotated270'] = tf.image.rot90(queries_transformated['zoomed_out'], k=3)
         
         #Smaller query
         if(query_width>=300 and query_height>=300):
             queries_transformated['zoomed_out_2'] = tf.image.resize(query, (int(query.shape[1]/3),int(query.shape[2]/3)))
+            queries_transformated['zoomed_out_2_rotated90'] = tf.image.rot90(queries_transformated['zoomed_out_2'], k=1)
+            queries_transformated['zoomed_out_2_rotated180'] = tf.image.rot90(queries_transformated['zoomed_out_2'], k=2)
+            queries_transformated['zoomed_out_2_rotated270'] = tf.image.rot90(queries_transformated['zoomed_out_2'], k=3)
 
         #Smaller query
         if(query_width>=400 and query_height>=400):
             queries_transformated['zoomed_out_3'] = tf.image.resize(query, (int(query.shape[1]/4),int(query.shape[2]/4)))
+            queries_transformated['zoomed_out_3_rotated90'] = tf.image.rot90(queries_transformated['zoomed_out_3'], k=1)
+            queries_transformated['zoomed_out_3_rotated180'] = tf.image.rot90(queries_transformated['zoomed_out_3'], k=2)
+            queries_transformated['zoomed_out_3_rotated270'] = tf.image.rot90(queries_transformated['zoomed_out_3'], k=3)
             
-        queries_transformated['rotated90'] = tf.image.rot90(query, k=1)
-        queries_transformated['rotated180'] = tf.image.rot90(query, k=2)
-        queries_transformated['rotated270'] = tf.image.rot90(query, k=3)
-        '''
+        
         for transformation in queries_transformated.keys():
             plt.imshow(queries_transformated[transformation][0])
             plt.show()
-        '''
         return queries_transformated
 
 
