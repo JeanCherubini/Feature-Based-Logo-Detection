@@ -367,18 +367,11 @@ class query_finder():
             queries_transformated['zoomed_out_rotated270'] = tf.image.rot90(queries_transformated['zoomed_out'], k=3)
         
         #Smaller query
-        if(query_width>=300 and query_height>=300):
-            queries_transformated['zoomed_out_2'] = tf.image.resize(query, (int(query.shape[1]/3),int(query.shape[2]/3)))
+        if(query_width>=400 or query_height>=400):
+            queries_transformated['zoomed_out_2'] = tf.image.resize(query, (int(query.shape[1]/4),int(query.shape[2]/4)))
             queries_transformated['zoomed_out_2_rotated90'] = tf.image.rot90(queries_transformated['zoomed_out_2'], k=1)
             queries_transformated['zoomed_out_2_rotated180'] = tf.image.rot90(queries_transformated['zoomed_out_2'], k=2)
             queries_transformated['zoomed_out_2_rotated270'] = tf.image.rot90(queries_transformated['zoomed_out_2'], k=3)
-
-        #Smaller query
-        if(query_width>=400 and query_height>=400):
-            queries_transformated['zoomed_out_3'] = tf.image.resize(query, (int(query.shape[1]/4),int(query.shape[2]/4)))
-            queries_transformated['zoomed_out_3_rotated90'] = tf.image.rot90(queries_transformated['zoomed_out_3'], k=1)
-            queries_transformated['zoomed_out_3_rotated180'] = tf.image.rot90(queries_transformated['zoomed_out_3'], k=2)
-            queries_transformated['zoomed_out_3_rotated270'] = tf.image.rot90(queries_transformated['zoomed_out_3'], k=3)
             
         '''
         for transformation in queries_transformated.keys():
@@ -781,7 +774,7 @@ class query_finder():
                 #stack pca features
                 for layer in layers:
                     try:
-                        stacked_pca_features = tf.concat([stacked_pca_features, pca_features_multilayer[layer]], axis=1)
+                        stacked_pca_features = tf.concat([stacked_pca_features, pca_features_multilayer[layer]], 1)
                     except:
                         stacked_pca_features = pca_features_multilayer[layer]
                         continue
@@ -881,7 +874,7 @@ class query_finder():
                         stacked_image_features = []
                         for layer in layers:
                             try:
-                                stacked_image_features = tf.concat([stacked_image_features, image_features_multilayer_resized[layer]], axis=3)
+                                stacked_image_features = tf.concat([stacked_image_features, image_features_multilayer_resized[layer]], 3)
                             except:
                                 stacked_image_features = image_features_multilayer_resized[layer]
                                 continue
@@ -1136,7 +1129,7 @@ class query_finder():
                     #stack all features as one vector
                     for transformation in queries_features_transformations_centered.keys():
                         try:
-                            queries_features_stacked = tf.concat([queries_features_stacked,tf.expand_dims(queries_features_transformations_centered[transformation],axis=-1)], axis=3)
+                            queries_features_stacked = tf.concat([queries_features_stacked,tf.expand_dims(queries_features_transformations_centered[transformation],axis=-1)], 3)
                         except:
                             queries_features_stacked = tf.expand_dims(queries_features_transformations_centered[transformation], axis=-1)
 
