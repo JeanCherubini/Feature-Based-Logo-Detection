@@ -38,9 +38,7 @@ def bb_intersection_over_union(boxA, boxB):
 	# return the intersection over union value
 	return iou
 
-def calculate_precision_recall(detections_file, all_annotations_this_class, th_IoU):
-
-
+def calculate_precision_recall_ps(detections_file, all_annotations_this_class, th_IoU):
 
     true_positives = 0
     false_positives = 0
@@ -109,6 +107,66 @@ def calculate_precision_recall(detections_file, all_annotations_this_class, th_I
     #plt.xlim(0,1)
     #plt.ylim(0,1)
     return np.array(recalls), np.array(precisions_smoothed)
+
+
+
+def calculate_precision_recall_ir(detections_file, all_annotations_this_class):
+    
+    true_positives = 0
+    false_positives = 0
+    false_negatives = 0
+
+    precisions = [1]
+    recalls = [0]
+
+
+    #false negatives start as the amount of instances in the set that have an annotation with the query
+    for img_id in all_annotations_this_class.keys():
+        false_negatives += 1
+
+    already_found = []
+    #check if the detections made are true positives or false positives according to the iou threshhold
+    for line in detections_file.readlines():
+        img_id = int(line.split(' ')[0])
+
+        #image of the detection exists in the ground truth
+        if(img_id in all_annotations_this_class.keys()):
+            if (img_id not in already_found):
+                true_positives+=1
+                false_negatives-=1                        
+                #save detection for non repetition
+                already_found.append(img_id)
+        #image of the detection is not in the ground truth, thus it does not contain the query at all
+        else:
+            false_positives+=1
+        try:
+            precisions.append(true_positives/(true_positives+false_positives))
+            recalls.append(true_positives/(true_positives+false_negatives))
+        except:
+            return np.array([0]), np.array([0])
+    
+    
+    #smoothing of precisions
+    precisions_smoothed = precisions
+    for i in range(len(precisions)-2,-1,-1):
+        max_to_right = np.max(precisions[i:])
+        if precisions_smoothed[i]<max_to_right:
+            precisions_smoothed[i]=max_to_right
+        else:
+            precisions_smoothed[i]=precisions[i]
+    #end curve
+    if recalls[-1]<1:
+        precisions.append(1e-15)
+        recalls.append(recalls[-1]+1e-15)
+
+    #plt.plot(recalls, precisions_smoothed, '-gp')
+    #plt.xlim(0,1)
+    #plt.ylim(0,1)
+    return np.array(recalls), np.array(precisions_smoothed)
+
+
+
+
 
 def calculate_interpolated_AP(recalls, precision, delta):
 
@@ -213,7 +271,7 @@ class AP_calculator_class():
         return 0
 
 
-    def calculate_query(self, params, query_class, query_instance):
+    def calculate_query_ps(self, params, query_class, query_instance):
         #creation of dataset like coco
         train_images = CocoLikeDataset()
         train_images.load_data(params.annotation_json, params.coco_images)
@@ -261,7 +319,7 @@ class AP_calculator_class():
             #load desired query results file
             query_results_ordered = open('{0}/{1}/{2}/{3}/detections_ordered/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,query_class,query_instance.replace('.png','').replace('.jpg','')), 'r')
             #calculate precision recall
-            recalls, precisions = calculate_precision_recall(query_results_ordered, all_annotations_this_class, iou)
+            recalls, precisions = calculate_precision_recall_ps(query_results_ordered, all_annotations_this_class, iou)
             calculated_interpolated_AP = calculate_interpolated_AP(recalls, precisions,0.01)
             file_AP.write('{0:2.2f} '.format(calculated_interpolated_AP))
             APS[iou] = calculated_interpolated_AP
@@ -418,7 +476,165 @@ class AP_calculator_class():
         return 0
 
     
-    def ps_task_transformation(self, params):
+    
+
+    def calculate_query_ir(self, params, query_class, query_instance):
+        #creation of dataset like coco
+        train_images = CocoLikeDataset()
+        train_images.load_data(params.annotation_json, params.coco_images)
+        train_images.prepare()
+
+        classes_dictionary = train_images.class_info
+        query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==query_class][0]
+
+
+        #If the AP file already exists, skip it
+        if(os.path.isfile('{0}/{1}/{2}/{3}/AP_ir/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer,params.principal_components , query_class, query_instance.replace('.png', '').replace('.jpg','')))):
+            print('AP already calculated for instance {0} from class {1}'.format(query_instance, query_class))
+            return
+
+
+
+        #get all ground truth annotations for the class of the query
+        all_annotations_this_class = {}
+
+        all_image_ids = train_images.image_ids
+        for image_id in all_image_ids:
+            annotations_this_image = train_images.load_annotations(image_id)
+            this_class_annotations = []
+            for annot in annotations_this_image:
+                if(annot[-1]==query_class_num):
+                    this_class_annotations.append(annot[:-1])
+            if(this_class_annotations):
+                all_annotations_this_class[image_id] = this_class_annotations
+
+                
+        if not os.path.isdir('{0}/{1}/{2}/{3}/AP_ir/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class)):
+            os.makedirs('{0}/{1}/{2}/{3}/AP_ir/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class))
+        
+        file_AP = open('{0}/{1}/{2}/{3}/AP_ir/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer,params.principal_components , query_class, query_instance.replace('.png', '').replace('.jpg','')), 'w')
+
+        #load desired query results file
+        query_results_ordered = open('{0}/{1}/{2}/{3}/detections_ordered/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components,query_class,query_instance.replace('.png','').replace('.jpg','')), 'r')
+        #calculate precision recall
+        recalls, precisions = calculate_precision_recall_ir(query_results_ordered, all_annotations_this_class)
+        calculated_interpolated_AP = calculate_interpolated_AP(recalls, precisions,0.01)
+        file_AP.write('{0:2.2f} '.format(calculated_interpolated_AP))
+        print('interpolated AP im:', calculated_interpolated_AP)
+
+        file_AP.close()
+        return 0
+
+
+    def plt_top_detections_ir(self, params, query_class, query_instance):
+
+        #creation of dataset like coco
+        train_images = CocoLikeDataset()
+        train_images.load_data(params.annotation_json, params.coco_images)
+        train_images.prepare()
+
+        classes_dictionary = train_images.class_info
+        query_class_num = [cat['id'] for cat in classes_dictionary if cat['name']==query_class][0]
+
+        
+        #load desired query results
+        query_results_ordered = open('{0}/{1}/{2}/{3}/detections_ordered/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png','').replace('.jpg','')), 'r')
+
+        #create figure to show query
+        #plt.figure()
+        #plt.imshow(query)        
+        if not os.path.isdir('{0}/{1}/{2}/{3}/results_ir/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class)):
+            os.makedirs('{0}/{1}/{2}/{3}/results_ir/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class))
+        
+
+        already_found = []
+        counter=0
+        for line in query_results_ordered.readlines():
+                        
+            if counter>=10 or os.path.isfile('{0}/{1}/{2}/{3}/results_ir/{4}/{5}_top_{6}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance, 'last')):
+                break
+            
+            id_ = int(line.split(' ')[0])
+            bbox = [int(x) for x in line.split(' ')[1:5]]
+            value = float(line.split(' ')[5])
+
+            print('counter:{0}, value:{1}, id_:{2}, bbox:{3}'.format(counter, value, id_, bbox))
+            n=counter%10
+            if n==0:
+                if counter!=0:
+                    if not(os.path.isfile('{0}/{1}/{2}/{3}/results_ir/{4}/{5}_top_{6}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance, str(counter)))):
+                        plt.savefig('{0}/{1}/{2}/{3}/results_ir/{4}/{5}_top_{6}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance, str(counter)))
+                    else:
+                        print('Query {} results IR already exist! '.format(query_instance))
+                        break
+                    plt.close()
+
+                    '''
+                    plt.show(block=False)
+                    plt.pause(3)            
+
+                    plt.close()
+                    '''
+                fig, ([ax0, ax1, ax2, ax3, ax4], [ax5, ax6, ax7, ax8, ax9]) = plt.subplots(2, 5, sharey=False, figsize=(50,30))
+                axs = ax0, ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8, ax9 
+            
+
+            #image load
+            if not id_ in already_found:
+                image = train_images.load_image(id_)
+                axs[n].imshow(image)
+                axs[n].axis('off')
+                
+
+                #get detections for this image
+                x1, y1, height, width = bbox
+                if not ([x1, y1, height, width]==[0 ,0 , 0 ,0]):
+                    rect = Rectangle((x1,y1), width, height, edgecolor='b', facecolor="none")
+                    axs[n].add_patch(rect)
+                    axs[n].text(x1, y1+height, query_class, color='b')
+                counter+=1
+                already_found.append(id_)
+                
+
+
+
+                try:
+                    #get ground truth for this image
+                    annotations = train_images.image_info[id_]['annotations']
+                    for ann in annotations:
+                        x1, y1 ,width, height = ann['bbox']
+                        label_number = ann['category_id']
+                        label = [cat['name'] for cat in classes_dictionary if cat['id']==label_number][0]
+                        if not ([x1, y1, width, height]==[]):
+                            if(int(query_class_num)==int(label_number)):         
+                                rect = Rectangle((x1,y1), width, height, edgecolor='g', facecolor="none")
+                                axs[n].add_patch(rect)
+                                axs[n].text(x1, y1, label, color='g')
+                            else:         
+                                rect = Rectangle((x1,y1), width, height, edgecolor='r', facecolor="none")
+                                axs[n].add_patch(rect)
+                                axs[n].text(x1, y1, label, color='r')
+                except:
+                    print('Annotation not found')
+                    continue
+            
+
+        if not(os.path.isfile('{0}/{1}/{2}/{3}/results_ir/{4}/{5}_top_{6}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance, 'last'))):
+            plt.savefig('{0}/{1}/{2}/{3}/results_ir/{4}/{5}_top_{6}.png'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance, 'last'))
+        else:
+            print('Query {} results already exist! '.format(query_instance))
+        
+        '''
+        plt.show(block=False)
+        plt.pause(3)
+        '''
+        plt.close()
+        
+        return 0
+
+
+    
+    def DocExplore_task_transformation(self, params):
 
         #creation of dataset like coco
         train_images = CocoLikeDataset()

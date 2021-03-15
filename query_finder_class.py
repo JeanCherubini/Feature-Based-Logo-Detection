@@ -84,43 +84,9 @@ def get_p_maximum_values(image_ids, heatmaps, query, p, is_split, transformation
             
 
 
-            #Transformation that rescales the query to a smaller size
-            if transformation=='zoomed_out':
-                x_del_begin += int(x_deletion_query/2)
-                y_del_begin += int(y_deletion_query/2)
-
-                #deletion of box
-                current_hmap[y_del_begin:y_del_begin + int(height_query/2), x_del_begin:x_del_begin + int(width_query/2)] = 0
-                if not is_split or is_split == 1:
-                    point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin, y_del_begin, int(height_query/2), int(width_query/2)], 'value':maximum_value} 
-                    
-                    '''
-                    #Show points rescued
-                    fig, axs = plt.subplots(1, 1, sharey=False, figsize=(25,15))
-                    axs.imshow(current_hmap)
-                    cntr = Rectangle((x_max, y_max), 3, 3, edgecolor='b', facecolor="r")
-                    axs.add_patch(cntr)
-                    rect = Rectangle((x_del_begin, y_del_begin), int(width_query/2), int(height_query/2), edgecolor='g', facecolor="none")
-                    axs.add_patch(rect)
-
-
-                    left_point = Rectangle((x_del_begin, y_del_begin), 2, 2, edgecolor='g', facecolor="r")
-                    axs.add_patch(left_point)
-
-                    right_point = Rectangle((x_del_begin + int(width_query/2), y_del_begin + int(height_query/2)), 2, 2, edgecolor='g', facecolor="r")
-                    axs.add_patch(right_point)
-                    print('x_max',x_max, 'y_max',y_max,'bbox',x_del_begin, y_del_begin, int(height_query/2), int(width_query/2), 'value', maximum_value)
-                    plt.show()
-                    '''
-
-                    
-                    
+            
                 
-                #Add width of image to detection only if its split number 2
-                if is_split == 2:
-                    point = {'image_id':image_ids[hmap_index] ,'x_max':x_max, 'y_max':y_max, 'bbox':[x_del_begin+width, y_del_begin, int(height_query/2), int(width_query/2)], 'value':maximum_value} 
-                
-            elif transformation=='center_cropped':
+            if transformation=='center_cropped':
                 new_x_del_begin = x_del_begin - x_deletion_query
                 new_y_del_begin = y_del_begin - y_deletion_query
                 new_height_query = 2*height_query
@@ -392,11 +358,23 @@ class query_finder():
         #Smaller query
         if(query_width>=100 and query_height>=100):
             queries_transformated['zoomed_out'] = tf.image.resize(query, (int(query.shape[1]/2),int(query.shape[2]/2)))
-    
+        
+        #Smaller query
+        if(query_width>=300 and query_height>=300):
+            queries_transformated['zoomed_out_2'] = tf.image.resize(query, (int(query.shape[1]/3),int(query.shape[2]/3)))
+
+        #Smaller query
+        if(query_width>=400 and query_height>=400):
+            queries_transformated['zoomed_out_3'] = tf.image.resize(query, (int(query.shape[1]/4),int(query.shape[2]/4)))
+            
         queries_transformated['rotated90'] = tf.image.rot90(query, k=1)
         queries_transformated['rotated180'] = tf.image.rot90(query, k=2)
         queries_transformated['rotated270'] = tf.image.rot90(query, k=3)
-        
+        '''
+        for transformation in queries_transformated.keys():
+            plt.imshow(queries_transformated[transformation][0])
+            plt.show()
+        '''
         return queries_transformated
 
 
@@ -1267,7 +1245,6 @@ class query_finder():
                                     p_points_transformations[transformation] = get_p_maximum_values(image_ids, heatmap_transformation, tf.squeeze(queries_transformated[transformation]), params.p, is_split, transformation)
                                 else:
                                     p_points_transformations[transformation] = np.concatenate( (p_points_transformations[transformation], get_p_maximum_values(image_ids, heatmap_transformation, tf.squeeze(queries_transformated[transformation]), params.p, is_split, transformation)) )
-
                                 
 
                             
