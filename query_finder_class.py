@@ -380,10 +380,11 @@ class query_finder():
             queries_transformated['zoomed_out_3_rotated180'] = tf.image.rot90(queries_transformated['zoomed_out_3'], k=2)
             queries_transformated['zoomed_out_3_rotated270'] = tf.image.rot90(queries_transformated['zoomed_out_3'], k=3)
             
-        
+        '''
         for transformation in queries_transformated.keys():
             plt.imshow(queries_transformated[transformation][0])
             plt.show()
+        '''
         return queries_transformated
 
 
