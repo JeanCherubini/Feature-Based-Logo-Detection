@@ -78,6 +78,9 @@ if __name__ == '__main__' :
 
     if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_transformations/' + str(params.principal_components) + '/detections'):
         os.makedirs(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_transformations/' + str(params.principal_components) + '/detections')
+    
+    if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '_transformations/' + str(params.principal_components) + '/detections'):
+        os.makedirs(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer + '_transformations/' + str(params.principal_components) + '/detections')
 
     
     time_file_transformations = open('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_transformations', params.principal_components),'w')
@@ -88,6 +91,8 @@ if __name__ == '__main__' :
             query = finder.get_query(params, query_class, query_instance)
             layer_to_use = finder.select_scale_query(params, query)
             params.layer = layer_to_use
+            if not os.path.isdir(params.feat_savedir + '/' + params.dataset_name + '/' + params.model + '_' + params.layer + '_transformations/' + str(params.principal_components) + '/detections'):
+                os.makedirs(params.feat_savedir +'/' + params.dataset_name + '/' + params.model + '_' + params.layer + '_transformations/' + str(params.principal_components) + '/detections')
             print('layer_to_use: ', layer_to_use)
             queries_transformated = finder.get_query_transformations(query)
             finder.search_query_transformations(params, query_class, query_instance, queries_transformated)
