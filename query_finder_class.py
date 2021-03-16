@@ -360,11 +360,14 @@ class query_finder():
         #Bigger query
         queries_transformated['center_cropped'] = tf.image.resize(tf.image.central_crop(query, central_fraction=0.5),(query.shape[1],query.shape[2]))
         #Smaller query
-        if(query_width>=100 and query_height>=100):
+        if(query_width>=300 and query_height>=300):
             queries_transformated['zoomed_out'] = tf.image.resize(query, (int(query.shape[1]/2),int(query.shape[2]/2)))
+            queries_transformated['zoomed_out_rotated90'] = tf.image.rot90(queries_transformated['zoomed_out'], k=1)
+            queries_transformated['zoomed_out_rotated180'] = tf.image.rot90(queries_transformated['zoomed_out'], k=2)
+            queries_transformated['zoomed_out_rotated270'] = tf.image.rot90(queries_transformated['zoomed_out'], k=3)
         
         #Smaller query
-        if(query_width>=400 and query_height>=400):
+        if(query_width>=500 and query_height>=500):
             queries_transformated['zoomed_out_2'] = tf.image.resize(query, (int(query.shape[1]/4),int(query.shape[2]/4)))
             queries_transformated['zoomed_out_2_rotated90'] = tf.image.rot90(queries_transformated['zoomed_out_2'], k=1)
             queries_transformated['zoomed_out_2_rotated180'] = tf.image.rot90(queries_transformated['zoomed_out_2'], k=2)
