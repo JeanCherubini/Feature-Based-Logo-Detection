@@ -282,7 +282,7 @@ class AP_calculator_class():
 
         #If the AP file already exists, skip it
         if(os.path.isfile('{0}/{1}/{2}/{3}/AP/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer,params.principal_components , query_class, query_instance.replace('.png', '').replace('.jpg','')))):
-            print('AP already calculated for instance {0} from class {1}'.format(query_instance, query_class))
+            print('AP for PS task already calculated for instance {0} from class {1}'.format(query_instance, query_class))
             return
 
 
@@ -307,7 +307,7 @@ class AP_calculator_class():
         assert(bb_intersection_over_union([0, 0, 10, 10], [0, 0, 10, 10])==1.0)
         assert(bb_intersection_over_union([0, 0, 10, 10], [10, 10, 10, 10])==0.0)
 
-        multiple_ious = [0.05 , 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95]
+        multiple_ious = [0.5]
         APS = {}
         
         if not os.path.isdir('{0}/{1}/{2}/{3}/AP/{4}'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class)):
@@ -321,7 +321,7 @@ class AP_calculator_class():
             #calculate precision recall
             recalls, precisions = calculate_precision_recall_ps(query_results_ordered, all_annotations_this_class, iou)
             calculated_interpolated_AP = calculate_interpolated_AP(recalls, precisions,0.01)
-            file_AP.write('{0:2.2f} '.format(calculated_interpolated_AP))
+            file_AP.write('{0:2.3f} '.format(calculated_interpolated_AP))
             APS[iou] = calculated_interpolated_AP
         print(query_instance, APS)
 
@@ -490,7 +490,7 @@ class AP_calculator_class():
 
         #If the AP file already exists, skip it
         if(os.path.isfile('{0}/{1}/{2}/{3}/AP_ir/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer,params.principal_components , query_class, query_instance.replace('.png', '').replace('.jpg','')))):
-            print('AP already calculated for instance {0} from class {1}'.format(query_instance, query_class))
+            print('AP for IM task already calculated for instance {0} from class {1}'.format(query_instance, query_class))
             return
 
 
@@ -519,7 +519,7 @@ class AP_calculator_class():
         #calculate precision recall
         recalls, precisions = calculate_precision_recall_ir(query_results_ordered, all_annotations_this_class)
         calculated_interpolated_AP = calculate_interpolated_AP(recalls, precisions,0.01)
-        file_AP.write('{0:2.2f} '.format(calculated_interpolated_AP))
+        file_AP.write('{0:2.3f} '.format(calculated_interpolated_AP))
         print('interpolated AP im:', calculated_interpolated_AP)
 
         file_AP.close()

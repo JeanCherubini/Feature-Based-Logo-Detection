@@ -307,7 +307,6 @@ class query_finder():
         #Expand dims to batch
         query = tf.expand_dims(query, axis=0)
 
-        print('query final shape:', query.shape)
         number_of_queries, height_feat_query, width_feat_query, channels_feat_query = query.shape
         #plt.imshow(query[0,:,:,0])
 
@@ -325,7 +324,6 @@ class query_finder():
             print('query_shape upsized:', height_feat_query, width_feat_query, channels_feat_query)
         '''
         
-        print('query final shape:', query.shape)
         return query
 
     def select_scale_query(self,params,query):
@@ -617,6 +615,7 @@ class query_finder():
                         print('Batch {0} processed in {1}'.format(batch_counter, time()-t_batch))
                     except:
                         print('Batch {} missing'.format(batch_counter))
+                        return 0
 
 
                     #if batch_counter==3:
@@ -1254,6 +1253,8 @@ class query_finder():
                             print('Batch {0} processed in {1}'.format(batch_counter, time()-t_batch))
                         except:
                             print('Batch {} missing'.format(batch_counter))
+                            return 0
+
 
                         #if batch_counter==2:
                         #    break
