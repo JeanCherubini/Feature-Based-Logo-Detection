@@ -336,7 +336,7 @@ class query_finder():
         if height<=100 or width<=100:
             size = 1
         #medium query
-        elif height>100 or width>100:
+        elif height>100 and width>100:
             size = 2
         else:
             size = 2
