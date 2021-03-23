@@ -308,11 +308,14 @@ class query_finder():
 
         #resize if query is too small
         height_query, width_query, channels = query.shape()
+
         if height_query<16:
+            print('---------------------------------------------------------------------------------------- AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH --------------------------------------------------------------------------')
             query = tf.image.resize(query, [16, 10*width_query], preserve_aspect_ratio = True)
             print('query resized:', query.shape)
 
         if width_query<16:
+            print('---------------------------------------------------------------------------------------- AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH --------------------------------------------------------------------------')
             query = tf.image.resize(query, [10*height_query, 16], preserve_aspect_ratio = True)
             print('query resized:', query.shape)
 
