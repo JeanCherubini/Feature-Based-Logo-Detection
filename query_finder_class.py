@@ -303,9 +303,22 @@ class query_finder():
     def get_query(self, params, query_class, query_instance):
         query = imread(params.query_path + '/' + query_class + '/' + query_instance)[:,:,:3]/255
 
+        
+        print('query original:', query.shape)
+
+        #resize if query is too small
+        height_query, width_query, channels = query.shape()
+        if height_query<16:
+            query = tf.image.resize(query, [16, 10*width_query], preserve_aspect_ratio = True)
+            print('query resized:', query.shape)
+
+        if width_query<16:
+            query = tf.image.resize(query, [10*height_query, 16], preserve_aspect_ratio = True)
+            print('query resized:', query.shape)
 
         #Expand dims to batch
         query = tf.expand_dims(query, axis=0)
+
 
         number_of_queries, height_feat_query, width_feat_query, channels_feat_query = query.shape
         #plt.imshow(query[0,:,:,0])

@@ -72,7 +72,6 @@ if __name__ == '__main__' :
 
     AP_calculator = AP_calculator_class()
     
-
     for query_class in query_classes:
         instances = os.listdir('{0}/{1}'.format(params.query_path, query_class))
         for query_instance in instances:
@@ -84,7 +83,7 @@ if __name__ == '__main__' :
                 AP_calculator.get_ordered_detections(params, query_class, query_instance)
 
                 #plot and calculate detection benchmarcks
-                #AP_calculator.plt_top_detections(params, query_class, query_instance)
+                AP_calculator.plt_top_detections(params, query_class, query_instance)
                 AP_calculator.calculate_query_ps(params, query_class, query_instance)
                 file_ap = open('{0}/{1}/{2}/{3}/AP/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png', '').replace('.jpg','')), 'r') 
                 file_all_ap = open('{0}/{1}/{2}/{3}/AP/all_AP.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components), 'a')
@@ -93,7 +92,7 @@ if __name__ == '__main__' :
                 file_ap.close()
 
                 #calculate imaghe benchmarks 
-                #AP_calculator.plt_top_detections_ir(params, query_class, query_instance)
+                AP_calculator.plt_top_detections_ir(params, query_class, query_instance)
                 AP_calculator.calculate_query_ir(params, query_class, query_instance)
                 file_ap_ir = open('{0}/{1}/{2}/{3}/AP_ir/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png', '').replace('.jpg','')), 'r') 
                 file_all_ap_ir = open('{0}/{1}/{2}/{3}/AP_ir/all_AP.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components), 'a')
@@ -106,8 +105,8 @@ if __name__ == '__main__' :
             except:
                 print('Detections file for query class {0} instance {1} not found'.format(query_class, query_instance))
     
+    del query    
 
-    AP_calculator.create_all_dataset_detections_file(params)
     
 
     #file_all_ap.close()
@@ -125,9 +124,8 @@ if __name__ == '__main__' :
 
     #mean AP for detection
     file_all_AP_pandas = pd.read_csv('{0}/{1}/{2}/{3}/AP/all_AP.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components), sep="\t", header='infer').rename(columns={'AP':'{0} ({1})'.format(params.model + '_' + params.layer, params.principal_components)})
-    print(file_all_AP_pandas)
     mean = file_all_AP_pandas.mean()['{0} ({1})'.format(params.model + '_' + params.layer, params.principal_components)]
-
+    
     #mean AP for ir
     file_all_AP_pandas_ir = pd.read_csv('{0}/{1}/{2}/{3}/AP_ir/all_AP.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components), sep="\t", header='infer').rename(columns={'AP':'{0} ({1})'.format(params.model + '_' + params.layer, params.principal_components)})
     mean_ir = file_all_AP_pandas_ir.mean()['{0} ({1})'.format(params.model + '_' + params.layer, params.principal_components)]
@@ -135,13 +133,19 @@ if __name__ == '__main__' :
    
 
     #time mean
-    file_all_time_pandas = pd.read_csv('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components), sep="\t",names = ['Instance' , 'Layer'],  )
-    mean_time = file_all_time_pandas.mean()[0]
+    if params.layer == 'transformations' or params.layer == 'scale_selection':
+        file_all_time_pandas = pd.read_csv('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components), sep="\t", usecols= [1,2], names=['Instance', 'Time'] )
+    else:
+        file_all_time_pandas = pd.read_csv('{0}/{1}/{2}/{3}/detections/time.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components), sep="\t", usecols= [0,1], names=['Instance', 'Time'])
+    
+    print(file_all_time_pandas)
+    mean_time = file_all_time_pandas.mean()['Time']
+    print(mean_time)
+
 
 
     #Calculations by class
     #ps
-
     means_by_class = file_all_AP_pandas.groupby('class').mean()
 
     #ir
@@ -150,6 +154,8 @@ if __name__ == '__main__' :
     maxes_by_class_ir = file_all_AP_pandas_ir.groupby('class').max()
 
 
+
+    del file_all_AP_pandas_ir, file_all_AP_pandas, file_all_time_pandas
 
 
     for class_ in means_by_class['{0} ({1})'.format(params.model + '_' + params.layer, params.principal_components)].keys():
@@ -165,7 +171,11 @@ if __name__ == '__main__' :
     summary_file.write('{0} ({1})\t{2:.4f}\t{3:.1f}\t{4:.4f}\n'.format(params.model + '_' + params.layer, params.principal_components, mean, mean_time, mean_ir))
     summary_file.close()
 
-    if params.dataset_name == 'DocExplore':
+    
+    if params.dataset_name=='DocExplore':
+
+        AP_calculator.create_all_dataset_detections_file(params)
+
         AP_calculator.DocExplore_task_transformation(params)
         os.chdir('{0}/{1}/evaluation_kit_v2'.format(params.feat_savedir, params.dataset_name))
         os.system('./main --h')
@@ -185,4 +195,3 @@ if __name__ == '__main__' :
         file_kit_result_ir = pd.read_csv('{0}/{1}/{2}/{3}/detections/im_for_DocExplore_results.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components), skiprows=1, nrows=1, sep=',', names=['mAP', 'min AP', 'max AP']).replace('mAP=','').replace('min_AP=','').replace('max_AP=','')
         print(file_kit_result_ir)
 
-    
