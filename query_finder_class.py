@@ -307,7 +307,7 @@ class query_finder():
         print('query original:', query.shape)
 
         #resize if query is too small
-        height_query, width_query, channels = query.shape()
+        height_query, width_query, channels = query.shape
 
         if height_query<16:
             print('---------------------------------------------------------------------------------------- AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH --------------------------------------------------------------------------')
