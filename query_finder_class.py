@@ -437,6 +437,9 @@ class query_finder():
                 if(params.model == 'resnet'):
                     model = tf.keras.applications.ResNet50(include_top=False, weights='imagenet', 
                                                         input_tensor=None, input_shape=None, pooling=None, classes=1000)
+                if(params.model == 'resnet152'):
+                    model = tf.keras.applications.ResNet152(include_top=False, weights='imagenet', 
+                                                        input_tensor=None, input_shape=None, pooling=None, classes=1000)
                 elif(params.model == 'VGG16'):
                     model = tf.keras.applications.VGG16(include_top=False, weights='imagenet', input_tensor=None, input_shape=None,
                                                         pooling=None, classes=1000, classifier_activation='softmax')

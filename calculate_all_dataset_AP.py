@@ -83,7 +83,7 @@ if __name__ == '__main__' :
                 AP_calculator.get_ordered_detections(params, query_class, query_instance)
 
                 #plot and calculate detection benchmarcks
-                AP_calculator.plt_top_detections(params, query_class, query_instance)
+                #AP_calculator.plt_top_detections(params, query_class, query_instance)
                 AP_calculator.calculate_query_ps(params, query_class, query_instance)
                 file_ap = open('{0}/{1}/{2}/{3}/AP/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png', '').replace('.jpg','')), 'r') 
                 file_all_ap = open('{0}/{1}/{2}/{3}/AP/all_AP.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components), 'a')
@@ -92,7 +92,7 @@ if __name__ == '__main__' :
                 file_ap.close()
 
                 #calculate imaghe benchmarks 
-                AP_calculator.plt_top_detections_ir(params, query_class, query_instance)
+                #AP_calculator.plt_top_detections_ir(params, query_class, query_instance)
                 AP_calculator.calculate_query_ir(params, query_class, query_instance)
                 file_ap_ir = open('{0}/{1}/{2}/{3}/AP_ir/{4}/{5}.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components, query_class, query_instance.replace('.png', '').replace('.jpg','')), 'r') 
                 file_all_ap_ir = open('{0}/{1}/{2}/{3}/AP_ir/all_AP.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components), 'a')
@@ -171,7 +171,7 @@ if __name__ == '__main__' :
     summary_file.write('{0} ({1})\t{2:.4f}\t{3:.1f}\t{4:.4f}\n'.format(params.model + '_' + params.layer, params.principal_components, mean, mean_time, mean_ir))
     summary_file.close()
 
-    
+    '''
     if params.dataset_name=='DocExplore':
 
         AP_calculator.create_all_dataset_detections_file(params)
@@ -194,4 +194,4 @@ if __name__ == '__main__' :
 
         file_kit_result_ir = pd.read_csv('{0}/{1}/{2}/{3}/detections/im_for_DocExplore_results.txt'.format(params.feat_savedir, params.dataset_name, params.model + '_' + params.layer, params.principal_components), skiprows=1, nrows=1, sep=',', names=['mAP', 'min AP', 'max AP']).replace('mAP=','').replace('min_AP=','').replace('max_AP=','')
         print(file_kit_result_ir)
-
+    '''

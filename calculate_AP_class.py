@@ -389,9 +389,9 @@ class AP_calculator_class():
             #get detections for this image
             x1, y1, height, width = bbox
             if not ([x1, y1, height, width]==[0 ,0 , 0 ,0]):
-                rect = Rectangle((x1,y1), width, height, edgecolor='b', facecolor="none")
+                rect = Rectangle((x1,y1), width, height, edgecolor='b', facecolor="none", lw=4, alpha=0.5)
                 axs[n].add_patch(rect)
-                axs[n].text(x1, y1+height, query_class, color='b')
+                axs[n].text(x1, y1+height-5, query_class + ' ' + str(value), color='b')
             counter+=1
 
 
@@ -405,13 +405,13 @@ class AP_calculator_class():
                     label = [cat['name'] for cat in classes_dictionary if cat['id']==label_number][0]
                     if not ([x1, y1, width, height]==[]):
                         if(int(query_class_num)==int(label_number)):         
-                            rect = Rectangle((x1,y1), width, height, edgecolor='g', facecolor="none")
+                            rect = Rectangle((x1,y1), width, height, edgecolor='g', facecolor="none", lw=4, alpha=0.7)
                             axs[n].add_patch(rect)
-                            axs[n].text(x1, y1, label, color='g')
+                            axs[n].text(x1, y1-5, label, color='g')
                         else:         
-                            rect = Rectangle((x1,y1), width, height, edgecolor='r', facecolor="none")
+                            rect = Rectangle((x1,y1), width, height, edgecolor='r', facecolor="none", lw=4, alpha=0.5)
                             axs[n].add_patch(rect)
-                            axs[n].text(x1, y1, label, color='r')
+                            axs[n].text(x1, y1-5, label, color='r')
             except:
                 print('Annotation not found')
                 continue
